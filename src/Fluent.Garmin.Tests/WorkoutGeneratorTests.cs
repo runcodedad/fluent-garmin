@@ -151,4 +151,83 @@ public class WorkoutGeneratorTests
                 System.IO.File.Delete(tempFile);
         }
     }
+
+    [Fact]
+    public void GenerateWorkoutFile_ShouldHandleCustomTargetRanges()
+    {
+        // Arrange
+        var workout = new WorkoutModel
+        {
+            Name = "Custom Range Test",
+            Sport = Sport.Running,
+            Steps = new List<WorkoutStep>
+            {
+                new WorkoutStep
+                {
+                    Name = "Heart Rate Range",
+                    Duration = new StepDuration { Type = DurationType.Time, Value = 600 },
+                    Intensity = Intensity.Active,
+                    Target = new StepTarget 
+                    { 
+                        Type = TargetType.HeartRate, 
+                        LowValue = 150, 
+                        HighValue = 170 
+                    }
+                },
+                new WorkoutStep
+                {
+                    Name = "Power Range",
+                    Duration = new StepDuration { Type = DurationType.Time, Value = 300 },
+                    Intensity = Intensity.Active,
+                    Target = new StepTarget 
+                    { 
+                        Type = TargetType.Power, 
+                        LowValue = 200, 
+                        HighValue = 250 
+                    }
+                },
+                new WorkoutStep
+                {
+                    Name = "Speed Range",
+                    Duration = new StepDuration { Type = DurationType.Distance, Value = 1000 },
+                    Intensity = Intensity.Active,
+                    Target = new StepTarget 
+                    { 
+                        Type = TargetType.Speed, 
+                        LowValue = 12, 
+                        HighValue = 15 
+                    }
+                },
+                new WorkoutStep
+                {
+                    Name = "Cadence Range",
+                    Duration = new StepDuration { Type = DurationType.Time, Value = 300 },
+                    Intensity = Intensity.Active,
+                    Target = new StepTarget 
+                    { 
+                        Type = TargetType.Cadence, 
+                        LowValue = 85, 
+                        HighValue = 95 
+                    }
+                }
+            }
+        };
+        var tempFile = Path.GetTempFileName() + ".fit";
+
+        try
+        {
+            // Act - This should not throw an exception and should handle custom ranges
+            WorkoutGenerator.GenerateWorkoutFile(workout, tempFile);
+
+            // Assert
+            Assert.True(System.IO.File.Exists(tempFile));
+            Assert.True(new FileInfo(tempFile).Length > 0);
+        }
+        finally
+        {
+            // Cleanup
+            if (System.IO.File.Exists(tempFile))
+                System.IO.File.Delete(tempFile);
+        }
+    }
 }

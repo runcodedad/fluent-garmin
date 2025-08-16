@@ -134,9 +134,8 @@ public static class WorkoutGenerator
                 }
                 else if (target.LowValue.HasValue && target.HighValue.HasValue)
                 {
-                    // TODO: Need to investigate correct SetTargetValue signature for HeartRate
-                    // workoutStep.SetTargetValue(0, target.LowValue.Value);
-                    // workoutStep.SetTargetValue(1, target.HighValue.Value);
+                    workoutStep.SetCustomTargetHeartRateLow(target.LowValue.Value);
+                    workoutStep.SetCustomTargetHeartRateHigh(target.HighValue.Value);
                 }
                 break;
 
@@ -148,9 +147,8 @@ public static class WorkoutGenerator
                 }
                 else if (target.LowValue.HasValue && target.HighValue.HasValue)
                 {
-                    // TODO: Need to investigate correct SetTargetValue signature for Speed
-                    // workoutStep.SetTargetValue(0, target.LowValue.Value);
-                    // workoutStep.SetTargetValue(1, target.HighValue.Value);
+                    workoutStep.SetCustomTargetSpeedLow(target.LowValue.Value);
+                    workoutStep.SetCustomTargetSpeedHigh(target.HighValue.Value);
                 }
                 break;
 
@@ -162,9 +160,8 @@ public static class WorkoutGenerator
                 }
                 else if (target.LowValue.HasValue && target.HighValue.HasValue)
                 {
-                    // TODO: Need to investigate correct SetTargetValue signature for Power
-                    // workoutStep.SetTargetValue(0, target.LowValue.Value);
-                    // workoutStep.SetTargetValue(1, target.HighValue.Value);
+                    workoutStep.SetCustomTargetPowerLow(target.LowValue.Value);
+                    workoutStep.SetCustomTargetPowerHigh(target.HighValue.Value);
                 }
                 break;
 
@@ -172,9 +169,8 @@ public static class WorkoutGenerator
                 workoutStep.SetTargetType(WktStepTarget.Cadence);
                 if (target.LowValue.HasValue && target.HighValue.HasValue)
                 {
-                    // TODO: Need to investigate correct SetTargetValue signature for Cadence
-                    // workoutStep.SetTargetValue(0, target.LowValue.Value);
-                    // workoutStep.SetTargetValue(1, target.HighValue.Value);
+                    workoutStep.SetCustomTargetCadenceLow(target.LowValue.Value);
+                    workoutStep.SetCustomTargetCadenceHigh(target.HighValue.Value);
                 }
                 break;
 
