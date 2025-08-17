@@ -39,14 +39,14 @@ public class WorkoutBuilder
     public WorkoutModel Build() => workout;
 
     // Quick helper methods
-    public WorkoutBuilder WarmUp(uint minutes, uint? hrZone = 1)
+    public WorkoutBuilder WarmUp(uint minutes, uint? zone = 1, TargetType targetType = TargetType.HeartRate)
     {
-        return AddStep("Warm Up", DurationType.Time, minutes * 60, Intensity.Warmup, TargetType.HeartRate, hrZone);
+        return AddStep("Warm Up", DurationType.Time, minutes * 60, Intensity.Warmup, targetType, zone);
     }
 
-    public WorkoutBuilder CoolDown(uint minutes, uint? hrZone = 1)
+    public WorkoutBuilder CoolDown(uint minutes, uint? zone = 1, TargetType targetType = TargetType.HeartRate)
     {
-        return AddStep("Cool Down", DurationType.Time, minutes * 60, Intensity.Cooldown, TargetType.HeartRate, hrZone);
+        return AddStep("Cool Down", DurationType.Time, minutes * 60, Intensity.Cooldown, targetType, zone);
     }
 
     public WorkoutBuilder TimeInterval(string name, uint minutes, uint? zone = null, TargetType targetType = TargetType.HeartRate)
@@ -57,5 +57,77 @@ public class WorkoutBuilder
     public WorkoutBuilder DistanceInterval(string name, uint meters, uint? zone = null, TargetType targetType = TargetType.Speed)
     {
         return AddStep(name, DurationType.Distance, meters, Intensity.Active, targetType, zone);
+    }
+
+    /// <summary>
+    /// Adds a repeat structure for intervals (e.g., 5x400m with recovery)
+    /// </summary>
+    /// <param name="name">Name of the interval set</param>
+    /// <param name="repeatCount">Number of times to repeat</param>
+    /// <param name="intervalDurationType">Duration type for the interval (Time/Distance)</param>
+    /// <param name="intervalValue">Duration value for the interval</param>
+    /// <param name="intervalZone">Target zone for the interval</param>
+    /// <param name="recoveryDurationType">Duration type for recovery (Time/Distance)</param>
+    /// <param name="recoveryValue">Duration value for recovery</param>
+    /// <param name="intervalTargetType">Target type for interval (HeartRate/Speed/Power)</param>
+    /// <param name="recoveryTargetType">Target type for recovery</param>
+    /// <param name="recoveryZone">Target zone for recovery (optional)</param>
+    public WorkoutBuilder AddIntervals(string name, uint repeatCount,
+                                     DurationType intervalDurationType, uint intervalValue, uint intervalZone,
+                                     DurationType recoveryDurationType, uint recoveryValue,
+                                     TargetType intervalTargetType = TargetType.Speed,
+                                     TargetType recoveryTargetType = TargetType.Open,
+                                     uint? recoveryZone = null)
+    {
+        var intervalStep = new WorkoutStep
+        {
+            Name = "Interval",
+            Duration = new StepDuration { Type = intervalDurationType, Value = intervalValue },
+            Intensity = Intensity.Active,
+            Target = new StepTarget { Type = intervalTargetType, Zone = intervalZone }
+        };
+
+        var recoveryStep = new WorkoutStep
+        {
+            Name = "Recovery",
+            Duration = new StepDuration { Type = recoveryDurationType, Value = recoveryValue },
+            Intensity = Intensity.Rest,
+            Target = new StepTarget { Type = recoveryTargetType, Zone = recoveryZone }
+        };
+
+        var repeatStep = new WorkoutStep
+        {
+            Name = name,
+            IsRepeat = true,
+            RepeatCount = repeatCount,
+            Duration = new StepDuration { Type = DurationType.RepeatUntilStepsCmplt, Value = repeatCount },
+            Intensity = Intensity.Active,
+            RepeatSteps = new List<WorkoutStep> { intervalStep, recoveryStep }
+        };
+
+        workout.Steps.Add(repeatStep);
+        return this;
+    }
+
+    /// <summary>
+    /// Adds a custom repeat structure with specified child steps
+    /// </summary>
+    /// <param name="name">Name of the repeat</param>
+    /// <param name="repeatCount">Number of times to repeat</param>
+    /// <param name="steps">Child steps to repeat</param>
+    public WorkoutBuilder AddRepeat(string name, uint repeatCount, params WorkoutStep[] steps)
+    {
+        var repeatStep = new WorkoutStep
+        {
+            Name = name,
+            IsRepeat = true,
+            RepeatCount = repeatCount,
+            Duration = new StepDuration { Type = DurationType.RepeatUntilStepsCmplt, Value = repeatCount },
+            Intensity = Intensity.Active,
+            RepeatSteps = new List<WorkoutStep>(steps)
+        };
+
+        workout.Steps.Add(repeatStep);
+        return this;
     }
 }

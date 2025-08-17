@@ -5,9 +5,9 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{87360B67-4E75-4421-95C9-CED9573A2754}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fluent.Garmin", "src\Fluent.Garmin\Fluent.Garmin.csproj", "{006CD1A3-6C0D-4E43-B056-37E74ACD5754}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fluent.Garmin", "Fluent.Garmin\Fluent.Garmin.csproj", "{006CD1A3-6C0D-4E43-B056-37E74ACD5754}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fluent.Garmin.Tests", "src\Fluent.Garmin.Tests\Fluent.Garmin.Tests.csproj", "{259F3B4C-FD62-4EA7-AE5F-2FBC2B35DC0B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fluent.Garmin.Tests", "Fluent.Garmin.Tests\Fluent.Garmin.Tests.csproj", "{259F3B4C-FD62-4EA7-AE5F-2FBC2B35DC0B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

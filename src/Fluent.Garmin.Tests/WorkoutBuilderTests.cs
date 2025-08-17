@@ -79,4 +79,88 @@ public class WorkoutBuilderTests
         Assert.Equal(Sport.Cycling, workout.Sport);
         Assert.Equal(3, workout.Steps.Count);
     }
+
+    [Fact]
+    public void WorkoutBuilder_AddIntervals_ShouldCreateRepeatStructure()
+    {
+        // Arrange & Act
+        var workout = new WorkoutBuilder()
+            .Name("Interval Test")
+            .Sport(Sport.Running)
+            .AddIntervals("5x400m", 5,
+                DurationType.Distance, 400, 4,     // 400m at speed zone 4
+                DurationType.Time, 120)            // 2min recovery
+            .Build();
+
+        // Assert
+        Assert.Equal("Interval Test", workout.Name);
+        Assert.Single(workout.Steps);
+
+        var repeatStep = workout.Steps[0];
+        Assert.Equal("5x400m", repeatStep.Name);
+        Assert.True(repeatStep.IsRepeat);
+        Assert.Equal(5u, repeatStep.RepeatCount);
+        Assert.Equal(DurationType.RepeatUntilStepsCmplt, repeatStep.Duration?.Type);
+        Assert.Equal(5u, repeatStep.Duration?.Value);
+        Assert.Equal(2, repeatStep.RepeatSteps.Count);
+
+        // Check interval step
+        var intervalStep = repeatStep.RepeatSteps[0];
+        Assert.Equal("Interval", intervalStep.Name);
+        Assert.Equal(DurationType.Distance, intervalStep.Duration?.Type);
+        Assert.Equal(400u, intervalStep.Duration?.Value);
+        Assert.Equal(TargetType.Speed, intervalStep.Target?.Type);
+        Assert.Equal(4u, intervalStep.Target?.Zone);
+
+        // Check recovery step
+        var recoveryStep = repeatStep.RepeatSteps[1];
+        Assert.Equal("Recovery", recoveryStep.Name);
+        Assert.Equal(DurationType.Time, recoveryStep.Duration?.Type);
+        Assert.Equal(120u, recoveryStep.Duration?.Value);
+        Assert.Equal(Intensity.Rest, recoveryStep.Intensity);
+        Assert.Equal(TargetType.Open, recoveryStep.Target?.Type);
+    }
+
+    [Fact]
+    public void WorkoutBuilder_AddRepeat_ShouldCreateCustomRepeatStructure()
+    {
+        // Arrange
+        var buildStep = new WorkoutStep
+        {
+            Name = "Build",
+            Duration = new StepDuration { Type = DurationType.Time, Value = 300 }, // 5 min
+            Intensity = Intensity.Active,
+            Target = new StepTarget { Type = TargetType.Power, Zone = 3 }
+        };
+
+        var restStep = new WorkoutStep
+        {
+            Name = "Rest",
+            Duration = new StepDuration { Type = DurationType.Time, Value = 180 }, // 3 min
+            Intensity = Intensity.Rest,
+            Target = new StepTarget { Type = TargetType.Open }
+        };
+
+        // Act
+        var workout = new WorkoutBuilder()
+            .Name("Custom Repeat Test")
+            .Sport(Sport.Cycling)
+            .AddRepeat("3x Build/Rest", 3, buildStep, restStep)
+            .Build();
+
+        // Assert
+        Assert.Equal("Custom Repeat Test", workout.Name);
+        Assert.Single(workout.Steps);
+
+        var repeatStep = workout.Steps[0];
+        Assert.Equal("3x Build/Rest", repeatStep.Name);
+        Assert.True(repeatStep.IsRepeat);
+        Assert.Equal(3u, repeatStep.RepeatCount);
+        Assert.Equal(DurationType.RepeatUntilStepsCmplt, repeatStep.Duration?.Type);
+        Assert.Equal(2, repeatStep.RepeatSteps.Count);
+
+        // Check that the steps are properly copied
+        Assert.Equal("Build", repeatStep.RepeatSteps[0].Name);
+        Assert.Equal("Rest", repeatStep.RepeatSteps[1].Name);
+    }
 }

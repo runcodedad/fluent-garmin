@@ -37,27 +37,15 @@ public static class WorkoutGenerator
             workoutMesg.SetWktName(workout.Name ?? "Custom Workout");
             workoutMesg.SetSport(workout.Sport);
             workoutMesg.SetCapabilities(32);
-            workoutMesg.SetNumValidSteps((ushort)workout.Steps.Count);
+            
+            // Calculate total number of steps including repeat child steps
+            var totalSteps = CalculateTotalSteps(workout.Steps);
+            workoutMesg.SetNumValidSteps((ushort)totalSteps);
             encodeDemo.Write(workoutMesg);
 
             // Create workout steps
-            for (ushort i = 0; i < workout.Steps.Count; i++)
-            {
-                var step = workout.Steps[i];
-                var workoutStep = new WorkoutStepMesg();
-                
-                workoutStep.SetMessageIndex(i);
-                workoutStep.SetWktStepName(step.Name ?? $"Step {i + 1}");
-                workoutStep.SetIntensity(step.Intensity);
-
-                // Set duration
-                SetStepDuration(workoutStep, step.Duration);
-
-                // Set target
-                SetStepTarget(workoutStep, step.Target);
-
-                encodeDemo.Write(workoutStep);
-            }
+            ushort stepIndex = 0;
+            WriteWorkoutSteps(encodeDemo, workout.Steps, ref stepIndex);
 
             Console.WriteLine($"Workout '{workout.Name}' created successfully as '{filename}'!");
             Console.WriteLine($"Steps: {workout.Steps.Count}, Sport: {workout.Sport}");
@@ -181,59 +169,92 @@ public static class WorkoutGenerator
         }
     }
 
+    private static int CalculateTotalSteps(List<WorkoutStep> steps)
+    {
+        int totalSteps = 0;
+        foreach (var step in steps)
+        {
+            if (step.IsRepeat)
+            {
+                // Repeat step + child steps + completion step
+                totalSteps += 1 + step.RepeatSteps.Count + 1;
+            }
+            else
+            {
+                totalSteps += 1;
+            }
+        }
+        return totalSteps;
+    }
+
+    private static void WriteWorkoutSteps(Encode encoder, List<WorkoutStep> steps, ref ushort stepIndex)
+    {
+        foreach (var step in steps)
+        {
+            if (step.IsRepeat)
+            {
+                WriteRepeatStep(encoder, step, ref stepIndex);
+            }
+            else
+            {
+                WriteRegularStep(encoder, step, stepIndex);
+                stepIndex++;
+            }
+        }
+    }
+
+    private static void WriteRepeatStep(Encode encoder, WorkoutStep repeatStep, ref ushort stepIndex)
+    {
+        // Create the parent repeat step
+        var workoutStep = new WorkoutStepMesg();
+        workoutStep.SetMessageIndex(stepIndex++);
+        workoutStep.SetWktStepName(repeatStep.Name ?? "Repeat");
+        workoutStep.SetIntensity(repeatStep.Intensity);
+        SetStepDuration(workoutStep, repeatStep.Duration);
+        SetStepTarget(workoutStep, repeatStep.Target);
+        encoder.Write(workoutStep);
+
+        // Write child steps
+        foreach (var childStep in repeatStep.RepeatSteps)
+        {
+            WriteRegularStep(encoder, childStep, stepIndex);
+            stepIndex++;
+        }
+
+        // Create the completion step that defines the repeat count
+        var completionStep = new WorkoutStepMesg();
+        completionStep.SetMessageIndex(stepIndex++);
+        completionStep.SetWktStepName("Repeat Complete");
+        completionStep.SetDurationType(WktStepDuration.RepeatUntilStepsCmplt);
+        completionStep.SetDurationStep(repeatStep.RepeatCount);
+        completionStep.SetIntensity(Intensity.Active);
+        completionStep.SetTargetType(WktStepTarget.Open);
+        encoder.Write(completionStep);
+    }
+
+    private static void WriteRegularStep(Encode encoder, WorkoutStep step, ushort stepIndex)
+    {
+        var workoutStep = new WorkoutStepMesg();
+        workoutStep.SetMessageIndex(stepIndex);
+        workoutStep.SetWktStepName(step.Name ?? $"Step {stepIndex + 1}");
+        workoutStep.SetIntensity(step.Intensity);
+        SetStepDuration(workoutStep, step.Duration);
+        SetStepTarget(workoutStep, step.Target);
+        encoder.Write(workoutStep);
+    }
+
     // Example workout models
     public static WorkoutModel CreateIntervalWorkoutModel()
     {
-        return new WorkoutModel
-        {
-            Name = "5x400m Track Intervals",
-            Sport = Sport.Running,
-            Steps = new List<WorkoutStep>
-            {
-                new WorkoutStep
-                {
-                    Name = "Warm Up",
-                    Duration = new StepDuration { Type = DurationType.Time, Value = 600 }, // 10 min
-                    Intensity = Intensity.Warmup,
-                    Target = new StepTarget { Type = TargetType.HeartRate, Zone = 1 }
-                },
-                new WorkoutStep
-                {
-                    Name = "Interval 1",
-                    Duration = new StepDuration { Type = DurationType.Distance, Value = 400 },
-                    Intensity = Intensity.Active,
-                    Target = new StepTarget { Type = TargetType.Speed, Zone = 4 }
-                },
-                new WorkoutStep
-                {
-                    Name = "Recovery 1",
-                    Duration = new StepDuration { Type = DurationType.Time, Value = 120 }, // 2 min
-                    Intensity = Intensity.Rest,
-                    Target = new StepTarget { Type = TargetType.Open }
-                },
-                new WorkoutStep
-                {
-                    Name = "Interval 2",
-                    Duration = new StepDuration { Type = DurationType.Distance, Value = 400 },
-                    Intensity = Intensity.Active,
-                    Target = new StepTarget { Type = TargetType.Speed, Zone = 4 }
-                },
-                new WorkoutStep
-                {
-                    Name = "Recovery 2",
-                    Duration = new StepDuration { Type = DurationType.Time, Value = 120 },
-                    Intensity = Intensity.Rest,
-                    Target = new StepTarget { Type = TargetType.Open }
-                },
-                new WorkoutStep
-                {
-                    Name = "Cool Down",
-                    Duration = new StepDuration { Type = DurationType.Time, Value = 600 },
-                    Intensity = Intensity.Cooldown,
-                    Target = new StepTarget { Type = TargetType.HeartRate, Zone = 1 }
-                }
-            }
-        };
+        return new WorkoutBuilder()
+            .Name("5x400m Track Intervals")
+            .Sport(Sport.Running)
+            .WarmUp(10, 1)  // 10 minutes in HR zone 1
+            .AddIntervals("5x400m", 5, 
+                DurationType.Distance, 400, 4,     // 400m at speed zone 4
+                DurationType.Time, 120)            // 2min recovery
+            .CoolDown(10, 1) // 10 minutes in HR zone 1
+            .Build();
     }
 
     public static WorkoutModel CreateTempoRunModel()
@@ -271,48 +292,28 @@ public static class WorkoutGenerator
 
     public static WorkoutModel CreateCyclingWorkoutModel()
     {
-        return new WorkoutModel
+        var buildStep = new WorkoutStep
         {
-            Name = "Power Intervals",
-            Sport = Sport.Cycling,
-            Steps = new List<WorkoutStep>
-            {
-                new WorkoutStep
-                {
-                    Name = "Warm Up",
-                    Duration = new StepDuration { Type = DurationType.Time, Value = 900 },
-                    Intensity = Intensity.Warmup,
-                    Target = new StepTarget { Type = TargetType.Power, Zone = 1 }
-                },
-                new WorkoutStep
-                {
-                    Name = "Build 1",
-                    Duration = new StepDuration { Type = DurationType.Time, Value = 300 }, // 5 min
-                    Intensity = Intensity.Active,
-                    Target = new StepTarget { Type = TargetType.Power, Zone = 3 }
-                },
-                new WorkoutStep
-                {
-                    Name = "Recovery",
-                    Duration = new StepDuration { Type = DurationType.Time, Value = 180 }, // 3 min
-                    Intensity = Intensity.Rest,
-                    Target = new StepTarget { Type = TargetType.Power, Zone = 1 }
-                },
-                new WorkoutStep
-                {
-                    Name = "Build 2",
-                    Duration = new StepDuration { Type = DurationType.Time, Value = 300 },
-                    Intensity = Intensity.Active,
-                    Target = new StepTarget { Type = TargetType.Power, Zone = 4 }
-                },
-                new WorkoutStep
-                {
-                    Name = "Cool Down",
-                    Duration = new StepDuration { Type = DurationType.Time, Value = 600 },
-                    Intensity = Intensity.Cooldown,
-                    Target = new StepTarget { Type = TargetType.Power, Zone = 1 }
-                }
-            }
+            Name = "Build",
+            Duration = new StepDuration { Type = DurationType.Time, Value = 300 }, // 5 min
+            Intensity = Intensity.Active,
+            Target = new StepTarget { Type = TargetType.Power, Zone = 3 }
         };
+
+        var recoveryStep = new WorkoutStep
+        {
+            Name = "Recovery",
+            Duration = new StepDuration { Type = DurationType.Time, Value = 180 }, // 3 min
+            Intensity = Intensity.Rest,
+            Target = new StepTarget { Type = TargetType.Power, Zone = 1 }
+        };
+
+        return new WorkoutBuilder()
+            .Name("Power Intervals")
+            .Sport(Sport.Cycling)
+            .WarmUp(15, 1, TargetType.Power)  // 15 minutes in power zone 1
+            .AddRepeat("3x Build/Recovery", 3, buildStep, recoveryStep)
+            .CoolDown(10, 1, TargetType.Power) // 10 minutes in power zone 1
+            .Build();
     }
 }

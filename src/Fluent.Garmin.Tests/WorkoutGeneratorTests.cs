@@ -14,7 +14,7 @@ public class WorkoutGeneratorTests
         // Assert
         Assert.Equal("5x400m Track Intervals", workout.Name);
         Assert.Equal(Sport.Running, workout.Sport);
-        Assert.Equal(6, workout.Steps.Count);
+        Assert.Equal(3, workout.Steps.Count);
 
         // Check warm up
         var warmUp = workout.Steps[0];
@@ -25,27 +25,38 @@ public class WorkoutGeneratorTests
         Assert.Equal(TargetType.HeartRate, warmUp.Target?.Type);
         Assert.Equal(1u, warmUp.Target?.Zone);
 
-        // Check first interval
-        var interval1 = workout.Steps[1];
-        Assert.Equal("Interval 1", interval1.Name);
-        Assert.Equal(DurationType.Distance, interval1.Duration?.Type);
-        Assert.Equal(400u, interval1.Duration?.Value);
-        Assert.Equal(Intensity.Active, interval1.Intensity);
-        Assert.Equal(TargetType.Speed, interval1.Target?.Type);
-        Assert.Equal(4u, interval1.Target?.Zone);
+        // Check repeat step
+        var repeatStep = workout.Steps[1];
+        Assert.Equal("5x400m", repeatStep.Name);
+        Assert.True(repeatStep.IsRepeat);
+        Assert.Equal(5u, repeatStep.RepeatCount);
+        Assert.Equal(DurationType.RepeatUntilStepsCmplt, repeatStep.Duration?.Type);
+        Assert.Equal(2, repeatStep.RepeatSteps.Count);
 
-        // Check first recovery
-        var recovery1 = workout.Steps[2];
-        Assert.Equal("Recovery 1", recovery1.Name);
-        Assert.Equal(DurationType.Time, recovery1.Duration?.Type);
-        Assert.Equal(120u, recovery1.Duration?.Value); // 2 minutes
-        Assert.Equal(Intensity.Rest, recovery1.Intensity);
-        Assert.Equal(TargetType.Open, recovery1.Target?.Type);
+        // Check interval step
+        var intervalStep = repeatStep.RepeatSteps[0];
+        Assert.Equal("Interval", intervalStep.Name);
+        Assert.Equal(DurationType.Distance, intervalStep.Duration?.Type);
+        Assert.Equal(400u, intervalStep.Duration?.Value);
+        Assert.Equal(Intensity.Active, intervalStep.Intensity);
+        Assert.Equal(TargetType.Speed, intervalStep.Target?.Type);
+        Assert.Equal(4u, intervalStep.Target?.Zone);
+
+        // Check recovery step
+        var recoveryStep = repeatStep.RepeatSteps[1];
+        Assert.Equal("Recovery", recoveryStep.Name);
+        Assert.Equal(DurationType.Time, recoveryStep.Duration?.Type);
+        Assert.Equal(120u, recoveryStep.Duration?.Value);
+        Assert.Equal(Intensity.Rest, recoveryStep.Intensity);
+        Assert.Equal(TargetType.Open, recoveryStep.Target?.Type);
 
         // Check cool down
-        var coolDown = workout.Steps[5];
+        var coolDown = workout.Steps[2];
         Assert.Equal("Cool Down", coolDown.Name);
+        Assert.Equal(DurationType.Time, coolDown.Duration?.Type);
+        Assert.Equal(600u, coolDown.Duration?.Value); // 10 minutes
         Assert.Equal(Intensity.Cooldown, coolDown.Intensity);
+        Assert.Equal(TargetType.HeartRate, coolDown.Target?.Type);
     }
 
     [Fact]
@@ -89,24 +100,46 @@ public class WorkoutGeneratorTests
         // Assert
         Assert.Equal("Power Intervals", workout.Name);
         Assert.Equal(Sport.Cycling, workout.Sport);
-        Assert.Equal(5, workout.Steps.Count);
+        Assert.Equal(3, workout.Steps.Count);
 
-        // Check that all steps have power targets
-        foreach (var step in workout.Steps)
-        {
-            Assert.Equal(TargetType.Power, step.Target?.Type);
-        }
+        // Check warm up
+        var warmUp = workout.Steps[0];
+        Assert.Equal("Warm Up", warmUp.Name);
+        Assert.Equal(900u, warmUp.Duration?.Value); // 15 minutes
+        Assert.Equal(Intensity.Warmup, warmUp.Intensity);
+        Assert.Equal(TargetType.Power, warmUp.Target?.Type);
+        Assert.Equal(1u, warmUp.Target?.Zone);
 
-        // Check build intervals
-        var build1 = workout.Steps[1];
-        Assert.Equal("Build 1", build1.Name);
-        Assert.Equal(300u, build1.Duration?.Value); // 5 minutes
-        Assert.Equal(3u, build1.Target?.Zone);
+        // Check repeat step
+        var repeatStep = workout.Steps[1];
+        Assert.Equal("3x Build/Recovery", repeatStep.Name);
+        Assert.True(repeatStep.IsRepeat);
+        Assert.Equal(3u, repeatStep.RepeatCount);
+        Assert.Equal(DurationType.RepeatUntilStepsCmplt, repeatStep.Duration?.Type);
+        Assert.Equal(2, repeatStep.RepeatSteps.Count);
 
-        var build2 = workout.Steps[3];
-        Assert.Equal("Build 2", build2.Name);
-        Assert.Equal(300u, build2.Duration?.Value); // 5 minutes
-        Assert.Equal(4u, build2.Target?.Zone);
+        // Check build step
+        var buildStep = repeatStep.RepeatSteps[0];
+        Assert.Equal("Build", buildStep.Name);
+        Assert.Equal(300u, buildStep.Duration?.Value); // 5 minutes
+        Assert.Equal(Intensity.Active, buildStep.Intensity);
+        Assert.Equal(TargetType.Power, buildStep.Target?.Type);
+        Assert.Equal(3u, buildStep.Target?.Zone);
+
+        // Check recovery step
+        var recoveryStep = repeatStep.RepeatSteps[1];
+        Assert.Equal("Recovery", recoveryStep.Name);
+        Assert.Equal(180u, recoveryStep.Duration?.Value); // 3 minutes
+        Assert.Equal(Intensity.Rest, recoveryStep.Intensity);
+        Assert.Equal(TargetType.Power, recoveryStep.Target?.Type);
+        Assert.Equal(1u, recoveryStep.Target?.Zone);
+
+        // Check cool down
+        var coolDown = workout.Steps[2];
+        Assert.Equal("Cool Down", coolDown.Name);
+        Assert.Equal(600u, coolDown.Duration?.Value); // 10 minutes
+        Assert.Equal(Intensity.Cooldown, coolDown.Intensity);
+        Assert.Equal(TargetType.Power, coolDown.Target?.Type);
     }
 
     [Fact]
