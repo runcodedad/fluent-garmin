@@ -49,18 +49,57 @@ public class WorkoutBuilder
         return AddStep("Cool Down", DurationType.Time, minutes * 60, Intensity.Cooldown, targetType, zone);
     }
 
-    public WorkoutBuilder TimeInterval(string name, uint minutes, uint? zone = null, TargetType targetType = TargetType.HeartRate)
+    public WorkoutBuilder AddTimeStep(string name, uint minutes, uint? zone = null, TargetType targetType = TargetType.HeartRate)
     {
         return AddStep(name, DurationType.Time, minutes * 60, Intensity.Active, targetType, zone);
     }
 
-    public WorkoutBuilder DistanceInterval(string name, uint meters, uint? zone = null, TargetType targetType = TargetType.Speed)
+    public WorkoutBuilder AddDistanceStep(string name, uint meters, uint? zone = null, TargetType targetType = TargetType.Speed)
     {
         return AddStep(name, DurationType.Distance, meters, Intensity.Active, targetType, zone);
     }
 
     /// <summary>
     /// Adds a repeat structure for intervals (e.g., 5x400m with recovery)
+    /// </summary>
+    /// <param name="name">Name of the interval set</param>
+    /// <param name="repeatCount">Number of times to repeat</param>
+    /// <param name="intervalOptions">Configuration for the interval step</param>
+    /// <param name="recoveryOptions">Configuration for the recovery step</param>
+    public WorkoutBuilder AddIntervals(string name, uint repeatCount, IntervalOptions intervalOptions, RecoveryOptions recoveryOptions)
+    {
+        var intervalStep = new WorkoutStep
+        {
+            Name = "Interval",
+            Duration = new StepDuration { Type = intervalOptions.DurationType, Value = intervalOptions.Value },
+            Intensity = Intensity.Active,
+            Target = new StepTarget { Type = intervalOptions.TargetType, Zone = intervalOptions.Zone }
+        };
+
+        var recoveryStep = new WorkoutStep
+        {
+            Name = "Recovery",
+            Duration = new StepDuration { Type = recoveryOptions.DurationType, Value = recoveryOptions.Value },
+            Intensity = Intensity.Rest,
+            Target = new StepTarget { Type = recoveryOptions.TargetType, Zone = recoveryOptions.Zone }
+        };
+
+        var repeatStep = new WorkoutStep
+        {
+            Name = name,
+            IsRepeat = true,
+            RepeatCount = repeatCount,
+            Duration = new StepDuration { Type = DurationType.RepeatUntilStepsCmplt, Value = repeatCount },
+            Intensity = Intensity.Active,
+            RepeatSteps = new List<WorkoutStep> { intervalStep, recoveryStep }
+        };
+
+        workout.Steps.Add(repeatStep);
+        return this;
+    }
+
+    /// <summary>
+    /// Adds a repeat structure for intervals (e.g., 5x400m with recovery) - convenience overload
     /// </summary>
     /// <param name="name">Name of the interval set</param>
     /// <param name="repeatCount">Number of times to repeat</param>
@@ -79,34 +118,23 @@ public class WorkoutBuilder
                                      TargetType recoveryTargetType = TargetType.Open,
                                      uint? recoveryZone = null)
     {
-        var intervalStep = new WorkoutStep
+        var intervalOptions = new IntervalOptions
         {
-            Name = "Interval",
-            Duration = new StepDuration { Type = intervalDurationType, Value = intervalValue },
-            Intensity = Intensity.Active,
-            Target = new StepTarget { Type = intervalTargetType, Zone = intervalZone }
+            DurationType = intervalDurationType,
+            Value = intervalValue,
+            Zone = intervalZone,
+            TargetType = intervalTargetType
         };
 
-        var recoveryStep = new WorkoutStep
+        var recoveryOptions = new RecoveryOptions
         {
-            Name = "Recovery",
-            Duration = new StepDuration { Type = recoveryDurationType, Value = recoveryValue },
-            Intensity = Intensity.Rest,
-            Target = new StepTarget { Type = recoveryTargetType, Zone = recoveryZone }
+            DurationType = recoveryDurationType,
+            Value = recoveryValue,
+            Zone = recoveryZone,
+            TargetType = recoveryTargetType
         };
 
-        var repeatStep = new WorkoutStep
-        {
-            Name = name,
-            IsRepeat = true,
-            RepeatCount = repeatCount,
-            Duration = new StepDuration { Type = DurationType.RepeatUntilStepsCmplt, Value = repeatCount },
-            Intensity = Intensity.Active,
-            RepeatSteps = new List<WorkoutStep> { intervalStep, recoveryStep }
-        };
-
-        workout.Steps.Add(repeatStep);
-        return this;
+        return AddIntervals(name, repeatCount, intervalOptions, recoveryOptions);
     }
 
     /// <summary>

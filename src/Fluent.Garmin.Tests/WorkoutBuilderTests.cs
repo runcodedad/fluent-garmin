@@ -13,7 +13,7 @@ public class WorkoutBuilderTests
             .Name("Test Workout")
             .Sport(Sport.Running)
             .WarmUp(10, 1)
-            .TimeInterval("Main Set", 20, 4, TargetType.HeartRate)
+            .AddTimeStep("Main Set", 20, 4, TargetType.HeartRate)
             .CoolDown(5, 1)
             .Build();
 
@@ -40,17 +40,17 @@ public class WorkoutBuilderTests
     }
 
     [Fact]
-    public void WorkoutBuilder_ShouldCreateDistanceIntervals()
+    public void WorkoutBuilder_ShouldCreateDistanceSteps()
     {
         // Arrange & Act
         var workout = new WorkoutBuilder()
-            .Name("Distance Intervals")
+            .Name("Distance Steps")
             .Sport(Sport.Running)
-            .DistanceInterval("400m Run", 400, 4, TargetType.Speed)
+            .AddDistanceStep("400m Run", 400, 4, TargetType.Speed)
             .Build();
 
         // Assert
-        Assert.Equal("Distance Intervals", workout.Name);
+        Assert.Equal("Distance Steps", workout.Name);
         Assert.Single(workout.Steps);
         Assert.Equal("400m Run", workout.Steps[0].Name);
         Assert.Equal(DurationType.Distance, workout.Steps[0].Duration?.Type);
@@ -67,7 +67,7 @@ public class WorkoutBuilderTests
         var result = builder.Name("Fluent Test")
                            .Sport(Sport.Cycling)
                            .WarmUp(15)
-                           .TimeInterval("Effort", 10, 3, TargetType.Power)
+                           .AddTimeStep("Effort", 10, 3, TargetType.Power)
                            .CoolDown(10);
 
         // Assert - Each method should return the same builder instance for chaining

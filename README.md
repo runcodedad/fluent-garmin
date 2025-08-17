@@ -26,7 +26,7 @@ var workout = new WorkoutBuilder()
     .Name("Morning Run")
     .Sport(Sport.Running)
     .WarmUp(10, 1, TargetType.HeartRate)  // 10 minutes in HR zone 1
-    .TimeInterval("Main Set", 20, 4, TargetType.HeartRate)  // 20 minutes in HR zone 4
+    .AddTimeStep("Main Set", 20, 4, TargetType.HeartRate)  // 20 minutes in HR zone 4
     .CoolDown(5, 1, TargetType.HeartRate)  // 5 minutes in HR zone 1
     .Build();
 
@@ -60,7 +60,7 @@ var workout = new WorkoutBuilder()
     .AddIntervals("4x3min Hard", 4,
         DurationType.Time, 180, 4,        // 3min at HR zone 4
         DurationType.Time, 90)            // 90sec recovery
-    .TimeInterval("Steady State", 10, 3, TargetType.HeartRate)  // 10min moderate
+    .AddTimeStep("Steady State", 10, 3, TargetType.HeartRate)  // 10min moderate
     .AddIntervals("6x30sec Strides", 6,
         DurationType.Time, 30, 5,         // 30sec at HR zone 5
         DurationType.Time, 60)            // 60sec recovery
