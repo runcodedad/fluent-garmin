@@ -6,14 +6,17 @@ A .NET 8 fluent wrapper library for Garmin's FIT SDK, enabling easy creation of 
 
 - **Fluent API**: Easy-to-use builder pattern for creating workouts
 - **Full Garmin FIT SDK Integration**: Leverages the official Garmin.FIT.Sdk package
+- **Proper Repeat Structure Support**: Uses Garmin's FIT SDK repeat patterns instead of manually creating individual steps
 - **Multiple Target Types**: Support for Heart Rate, Speed, Power, and Cadence targets
 - **Zone and Custom Range Support**: Use predefined zones or custom value ranges
+- **Interval Creation**: Easy interval creation with automatic repeat structure using `AddIntervals()` method
+- **Custom Repeat Patterns**: Flexible repeat structures with `AddRepeat()` method
 - **Example Workouts**: Pre-built examples for common workout types
-- **Comprehensive Testing**: Full test coverage with 21+ unit tests
+- **Comprehensive Testing**: Full test coverage with 23+ unit tests
 
 ## Quick Start
 
-### Creating a Simple Workout with the Fluent Builder
+### Example 1: Basic Workout (Warm Up, Run, Cool Down)
 
 ```csharp
 using Fluent.Garmin;
@@ -22,29 +25,94 @@ using Dynastream.Fit;
 var workout = new WorkoutBuilder()
     .Name("Morning Run")
     .Sport(Sport.Running)
-    .WarmUp(10, 1)  // 10 minutes in HR zone 1
+    .WarmUp(10, 1, TargetType.HeartRate)  // 10 minutes in HR zone 1
     .TimeInterval("Main Set", 20, 4, TargetType.HeartRate)  // 20 minutes in HR zone 4
-    .CoolDown(5, 1)  // 5 minutes in HR zone 1
+    .CoolDown(5, 1, TargetType.HeartRate)  // 5 minutes in HR zone 1
     .Build();
 
 // Generate the FIT file
 WorkoutGenerator.GenerateWorkoutFile(workout, "morning_run.fit");
 ```
 
+### Example 2: Interval Workout with Repeat Structure
+
+```csharp
+var workout = new WorkoutBuilder()
+    .Name("Track Intervals")
+    .Sport(Sport.Running)
+    .WarmUp(10, 1)  // 10 minutes in HR zone 1
+    .AddIntervals("5x400m", 5, 
+        DurationType.Distance, 400, 4,  // 400m at speed zone 4
+        DurationType.Time, 120)         // 2min recovery
+    .CoolDown(10, 1)  // 10 minutes in HR zone 1
+    .Build();
+
+WorkoutGenerator.GenerateWorkoutFile(workout, "intervals.fit");
+```
+
+### Example 3: Fartlek Workout (Mixed Intervals)
+
+```csharp
+var workout = new WorkoutBuilder()
+    .Name("Fartlek Run")
+    .Sport(Sport.Running)
+    .WarmUp(15, 2, TargetType.HeartRate)  // 15 minutes easy
+    .AddIntervals("4x3min Hard", 4,
+        DurationType.Time, 180, 4,        // 3min at HR zone 4
+        DurationType.Time, 90)            // 90sec recovery
+    .TimeInterval("Steady State", 10, 3, TargetType.HeartRate)  // 10min moderate
+    .AddIntervals("6x30sec Strides", 6,
+        DurationType.Time, 30, 5,         // 30sec at HR zone 5
+        DurationType.Time, 60)            // 60sec recovery
+    .CoolDown(10, 1, TargetType.HeartRate)  // 10 minutes easy
+    .Build();
+
+WorkoutGenerator.GenerateWorkoutFile(workout, "fartlek.fit");
+```
+
 ### Using Pre-built Example Workouts
 
 ```csharp
-// Interval training
+// 5x400m track intervals with proper repeat structure
 var intervals = WorkoutGenerator.CreateIntervalWorkoutModel();
 WorkoutGenerator.GenerateWorkoutFile(intervals, "intervals.fit");
 
-// Tempo run
+// 20-minute tempo run
 var tempo = WorkoutGenerator.CreateTempoRunModel();
 WorkoutGenerator.GenerateWorkoutFile(tempo, "tempo.fit");
 
-// Cycling workout
+// Power-based cycling intervals with 3x Build/Recovery pattern
 var cycling = WorkoutGenerator.CreateCyclingWorkoutModel();
 WorkoutGenerator.GenerateWorkoutFile(cycling, "cycling.fit");
+```
+
+### Creating Advanced Repeat Patterns
+
+```csharp
+// Custom repeat structure with build and recovery phases
+var buildStep = new WorkoutStep
+{
+    Name = "Build",
+    Duration = new StepDuration { Type = DurationType.Time, Value = 300 }, // 5 min
+    Intensity = Intensity.Active,
+    Target = new StepTarget { Type = TargetType.Power, Zone = 3 }
+};
+
+var recoveryStep = new WorkoutStep
+{
+    Name = "Recovery", 
+    Duration = new StepDuration { Type = DurationType.Time, Value = 180 }, // 3 min
+    Intensity = Intensity.Rest,
+    Target = new StepTarget { Type = TargetType.Power, Zone = 1 }
+};
+
+var workout = new WorkoutBuilder()
+    .Name("Power Intervals")
+    .Sport(Sport.Cycling)
+    .WarmUp(15, 1, TargetType.Power)
+    .AddRepeat("3x Build/Recovery", 3, buildStep, recoveryStep)
+    .CoolDown(10, 1, TargetType.Power)
+    .Build();
 ```
 
 ### Creating Custom Target Ranges
@@ -72,6 +140,39 @@ var workout = new WorkoutModel
 };
 ```
 
+## Repeat Structure Support
+
+The library uses proper Garmin FIT SDK repeat patterns for efficient interval creation:
+
+### AddIntervals() Method
+Creates structured intervals with automatic repeat functionality:
+
+```csharp
+.AddIntervals("5x400m", 5, 
+    DurationType.Distance, 400, 4,  // 400m at speed zone 4
+    DurationType.Time, 120)         // 2min recovery
+```
+
+This creates:
+- **Repeat Step**: Parent step with `RepeatUntilStepsCmplt` duration type
+- **Child Steps**: Interval and recovery steps contained within repeat structure  
+- **Completion Step**: Defines how many times to repeat the pattern (5 times)
+
+### AddRepeat() Method
+For custom repeat patterns with specified child steps:
+
+```csharp
+.AddRepeat("Pyramid", 3, 
+    new WorkoutStep { Name = "Build", Duration = ... },
+    new WorkoutStep { Name = "Recover", Duration = ... })
+```
+
+### Benefits Over Manual Steps
+- More efficient FIT file structure
+- Follows Garmin's recommended practices
+- Easier to modify repeat counts
+- Better display on Garmin devices
+
 ## Project Structure
 
 - **Fluent.Garmin**: Main library containing all workout classes and the fluent API
@@ -91,7 +192,7 @@ var workout = new WorkoutModel
 - **Distance**: Distance in meters
 - **Open**: No specific duration (manual advance)
 - **Calories**: Target calorie burn
-- **RepeatUntilStepsCmplt**: Repeat until specified steps complete
+- **RepeatUntilStepsCmplt**: Repeat until specified steps complete (used for repeat structures)
 - **RepeatUntilTime**: Repeat until time duration
 - **RepeatUntilDistance**: Repeat until distance covered
 
