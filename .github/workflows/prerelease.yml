@@ -40,7 +40,11 @@ jobs:
         echo "Generated version: $VERSION (base: $BASE_VERSION)"
         
     - name: Pack NuGet package
-      run: dotnet pack src/Fluent.Garmin/Fluent.Garmin.csproj --configuration Release --no-build --output ./artifacts -p:PackageVersion=${{ steps.version.outputs.version }}
+      run: |
+        echo "Packing with version: ${{ steps.version.outputs.version }}"
+        dotnet pack src/Fluent.Garmin/Fluent.Garmin.csproj --configuration Release --no-build --output ./artifacts -p:PackageVersion=${{ steps.version.outputs.version }}
+        echo "Generated packages:"
+        ls -la ./artifacts/
       
     - name: Publish to GitHub Packages
       run: |
@@ -50,7 +54,7 @@ jobs:
     - name: Publish to NuGet.org (if API key is configured)
       run: |
         if [ -n "${{ secrets.NUGET_API_KEY }}" ]; then
-          echo "Publishing pre-release to NuGet.org..."
+          echo "Publishing pre-release version ${{ steps.version.outputs.version }} to NuGet.org..."
           dotnet nuget push ./artifacts/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }} --skip-duplicate
         else
           echo "NUGET_API_KEY not configured, skipping NuGet.org publish"
