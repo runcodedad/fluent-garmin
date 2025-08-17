@@ -246,13 +246,26 @@ public static class WorkoutGenerator
     // Example workout models
     public static WorkoutModel CreateIntervalWorkoutModel()
     {
+        var intervalOptions = new IntervalOptions
+        {
+            DurationType = DurationType.Distance,
+            Value = 400,
+            Zone = 4,
+            TargetType = TargetType.Speed
+        };
+
+        var recoveryOptions = new RecoveryOptions
+        {
+            DurationType = DurationType.Time,
+            Value = 120,
+            TargetType = TargetType.Open
+        };
+
         return new WorkoutBuilder()
             .Name("5x400m Track Intervals")
             .Sport(Sport.Running)
             .WarmUp(10, 1)  // 10 minutes in HR zone 1
-            .AddIntervals("5x400m", 5, 
-                DurationType.Distance, 400, 4,     // 400m at speed zone 4
-                DurationType.Time, 120)            // 2min recovery
+            .AddIntervals("5x400m", 5, intervalOptions, recoveryOptions)
             .CoolDown(10, 1) // 10 minutes in HR zone 1
             .Build();
     }

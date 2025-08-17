@@ -83,13 +83,27 @@ public class WorkoutBuilderTests
     [Fact]
     public void WorkoutBuilder_AddIntervals_ShouldCreateRepeatStructure()
     {
-        // Arrange & Act
+        // Arrange
+        var intervalOptions = new IntervalOptions
+        {
+            DurationType = DurationType.Distance,
+            Value = 400,
+            Zone = 4,
+            TargetType = TargetType.Speed
+        };
+
+        var recoveryOptions = new RecoveryOptions
+        {
+            DurationType = DurationType.Time,
+            Value = 120,
+            TargetType = TargetType.Open
+        };
+
+        // Act
         var workout = new WorkoutBuilder()
             .Name("Interval Test")
             .Sport(Sport.Running)
-            .AddIntervals("5x400m", 5,
-                DurationType.Distance, 400, 4,     // 400m at speed zone 4
-                DurationType.Time, 120)            // 2min recovery
+            .AddIntervals("5x400m", 5, intervalOptions, recoveryOptions)
             .Build();
 
         // Assert

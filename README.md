@@ -37,13 +37,26 @@ WorkoutGenerator.GenerateWorkoutFile(workout, "morning_run.fit");
 ### Example 2: Interval Workout with Repeat Structure
 
 ```csharp
+var intervalOptions = new IntervalOptions 
+{
+    DurationType = DurationType.Distance,
+    Value = 400,
+    Zone = 4,
+    TargetType = TargetType.Speed
+};
+
+var recoveryOptions = new RecoveryOptions
+{
+    DurationType = DurationType.Time,
+    Value = 120,
+    TargetType = TargetType.Open
+};
+
 var workout = new WorkoutBuilder()
     .Name("Track Intervals")
     .Sport(Sport.Running)
     .WarmUp(10, 1)  // 10 minutes in HR zone 1
-    .AddIntervals("5x400m", 5, 
-        DurationType.Distance, 400, 4,  // 400m at speed zone 4
-        DurationType.Time, 120)         // 2min recovery
+    .AddIntervals("5x400m", 5, intervalOptions, recoveryOptions)
     .CoolDown(10, 1)  // 10 minutes in HR zone 1
     .Build();
 
@@ -53,17 +66,43 @@ WorkoutGenerator.GenerateWorkoutFile(workout, "intervals.fit");
 ### Example 3: Fartlek Workout (Mixed Intervals)
 
 ```csharp
+var hardIntervalOptions = new IntervalOptions
+{
+    DurationType = DurationType.Time,
+    Value = 180,
+    Zone = 4,
+    TargetType = TargetType.HeartRate
+};
+
+var hardRecoveryOptions = new RecoveryOptions
+{
+    DurationType = DurationType.Time,
+    Value = 90,
+    TargetType = TargetType.Open
+};
+
+var strideIntervalOptions = new IntervalOptions
+{
+    DurationType = DurationType.Time,
+    Value = 30,
+    Zone = 5,
+    TargetType = TargetType.HeartRate
+};
+
+var strideRecoveryOptions = new RecoveryOptions
+{
+    DurationType = DurationType.Time,
+    Value = 60,
+    TargetType = TargetType.Open
+};
+
 var workout = new WorkoutBuilder()
     .Name("Fartlek Run")
     .Sport(Sport.Running)
     .WarmUp(15, 2, TargetType.HeartRate)  // 15 minutes easy
-    .AddIntervals("4x3min Hard", 4,
-        DurationType.Time, 180, 4,        // 3min at HR zone 4
-        DurationType.Time, 90)            // 90sec recovery
+    .AddIntervals("4x3min Hard", 4, hardIntervalOptions, hardRecoveryOptions)
     .AddTimeStep("Steady State", 10, 3, TargetType.HeartRate)  // 10min moderate
-    .AddIntervals("6x30sec Strides", 6,
-        DurationType.Time, 30, 5,         // 30sec at HR zone 5
-        DurationType.Time, 60)            // 60sec recovery
+    .AddIntervals("6x30sec Strides", 6, strideIntervalOptions, strideRecoveryOptions)
     .CoolDown(10, 1, TargetType.HeartRate)  // 10 minutes easy
     .Build();
 
@@ -148,9 +187,22 @@ The library uses proper Garmin FIT SDK repeat patterns for efficient interval cr
 Creates structured intervals with automatic repeat functionality:
 
 ```csharp
-.AddIntervals("5x400m", 5, 
-    DurationType.Distance, 400, 4,  // 400m at speed zone 4
-    DurationType.Time, 120)         // 2min recovery
+var intervalOptions = new IntervalOptions 
+{
+    DurationType = DurationType.Distance,
+    Value = 400,
+    Zone = 4,
+    TargetType = TargetType.Speed
+};
+
+var recoveryOptions = new RecoveryOptions
+{
+    DurationType = DurationType.Time,
+    Value = 120,
+    TargetType = TargetType.Open
+};
+
+.AddIntervals("5x400m", 5, intervalOptions, recoveryOptions)
 ```
 
 This creates:

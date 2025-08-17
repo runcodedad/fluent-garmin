@@ -98,44 +98,7 @@ public class WorkoutBuilder
         return this;
     }
 
-    /// <summary>
-    /// Adds a repeat structure for intervals (e.g., 5x400m with recovery) - convenience overload
-    /// </summary>
-    /// <param name="name">Name of the interval set</param>
-    /// <param name="repeatCount">Number of times to repeat</param>
-    /// <param name="intervalDurationType">Duration type for the interval (Time/Distance)</param>
-    /// <param name="intervalValue">Duration value for the interval</param>
-    /// <param name="intervalZone">Target zone for the interval</param>
-    /// <param name="recoveryDurationType">Duration type for recovery (Time/Distance)</param>
-    /// <param name="recoveryValue">Duration value for recovery</param>
-    /// <param name="intervalTargetType">Target type for interval (HeartRate/Speed/Power)</param>
-    /// <param name="recoveryTargetType">Target type for recovery</param>
-    /// <param name="recoveryZone">Target zone for recovery (optional)</param>
-    public WorkoutBuilder AddIntervals(string name, uint repeatCount,
-                                     DurationType intervalDurationType, uint intervalValue, uint intervalZone,
-                                     DurationType recoveryDurationType, uint recoveryValue,
-                                     TargetType intervalTargetType = TargetType.Speed,
-                                     TargetType recoveryTargetType = TargetType.Open,
-                                     uint? recoveryZone = null)
-    {
-        var intervalOptions = new IntervalOptions
-        {
-            DurationType = intervalDurationType,
-            Value = intervalValue,
-            Zone = intervalZone,
-            TargetType = intervalTargetType
-        };
 
-        var recoveryOptions = new RecoveryOptions
-        {
-            DurationType = recoveryDurationType,
-            Value = recoveryValue,
-            Zone = recoveryZone,
-            TargetType = recoveryTargetType
-        };
-
-        return AddIntervals(name, repeatCount, intervalOptions, recoveryOptions);
-    }
 
     /// <summary>
     /// Adds a custom repeat structure with specified child steps
