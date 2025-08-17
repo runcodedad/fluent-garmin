@@ -1,5 +1,8 @@
 # Fluent Garmin
 
+[![Latest Release](https://img.shields.io/github/v/release/runcodedad/fluent-garmin?label=Latest%20Release)](https://github.com/runcodedad/fluent-garmin/releases/latest)
+[![Latest Pre-release](https://img.shields.io/github/v/release/runcodedad/fluent-garmin?include_prereleases&label=Latest%20Pre-release)](https://github.com/runcodedad/fluent-garmin/releases)
+
 A .NET 8 fluent wrapper library for Garmin's FIT SDK, enabling easy creation of workout files for Garmin devices.
 
 ## Features

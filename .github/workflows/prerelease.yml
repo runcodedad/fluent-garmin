@@ -33,9 +33,11 @@ jobs:
     - name: Generate version
       id: version
       run: |
-        VERSION="1.0.0-preview.${{ github.run_number }}"
+        # Extract version from csproj file
+        BASE_VERSION=$(grep -oP '<Version>\K[^<]+' src/Fluent.Garmin/Fluent.Garmin.csproj)
+        VERSION="${BASE_VERSION}-preview.${{ github.run_number }}"
         echo "version=$VERSION" >> $GITHUB_OUTPUT
-        echo "Generated version: $VERSION"
+        echo "Generated version: $VERSION (base: $BASE_VERSION)"
         
     - name: Pack NuGet package
       run: dotnet pack src/Fluent.Garmin/Fluent.Garmin.csproj --configuration Release --no-build --output ./artifacts -p:PackageVersion=${{ steps.version.outputs.version }}

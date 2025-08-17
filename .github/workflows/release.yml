@@ -3,10 +3,6 @@ name: Official Release
 on:
   workflow_dispatch:
     inputs:
-      version:
-        description: 'Release version (e.g., 1.0.0)'
-        required: true
-        type: string
       release_notes:
         description: 'Release notes'
         required: false
@@ -22,10 +18,18 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
+    - name: Extract version from csproj
+      id: version
+      run: |
+        VERSION=$(grep -oP '<Version>\K[^<]+' src/Fluent.Garmin/Fluent.Garmin.csproj)
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "Using version from csproj: $VERSION"
+        
     - name: Validate version format
       run: |
-        if [[ ! "${{ github.event.inputs.version }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-          echo "Error: Version must be in format X.Y.Z (e.g., 1.0.0)"
+        if [[ ! "${{ steps.version.outputs.version }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          echo "Error: Version in csproj must be in format X.Y.Z (e.g., 1.0.0)"
+          echo "Current version: ${{ steps.version.outputs.version }}"
           exit 1
         fi
         
@@ -44,7 +48,7 @@ jobs:
       run: dotnet test src/Fluent.Garmin.sln --configuration Release --no-build --verbosity normal
       
     - name: Pack NuGet package
-      run: dotnet pack src/Fluent.Garmin/Fluent.Garmin.csproj --configuration Release --no-build --output ./artifacts -p:PackageVersion=${{ github.event.inputs.version }}
+      run: dotnet pack src/Fluent.Garmin/Fluent.Garmin.csproj --configuration Release --no-build --output ./artifacts -p:PackageVersion=${{ steps.version.outputs.version }}
       
     - name: Publish to GitHub Packages
       run: |
@@ -63,8 +67,8 @@ jobs:
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: v${{ github.event.inputs.version }}
-        name: Release v${{ github.event.inputs.version }}
+        tag_name: v${{ steps.version.outputs.version }}
+        name: Release v${{ steps.version.outputs.version }}
         body: |
           ${{ github.event.inputs.release_notes }}
           
@@ -72,12 +76,12 @@ jobs:
           
           **From NuGet.org:**
           ```bash
-          dotnet add package Fluent.Garmin --version ${{ github.event.inputs.version }}
+          dotnet add package Fluent.Garmin --version ${{ steps.version.outputs.version }}
           ```
           
           **From GitHub Packages:**
           ```bash
-          dotnet add package Fluent.Garmin --version ${{ github.event.inputs.version }} --source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
+          dotnet add package Fluent.Garmin --version ${{ steps.version.outputs.version }} --source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
           ```
         draft: false
         prerelease: false
@@ -87,4 +91,4 @@ jobs:
       run: |
         # This step will mark any existing pre-release as not pre-release anymore
         # since we now have an official release
-        echo "Official release v${{ github.event.inputs.version }} published successfully"
+        echo "Official release v${{ steps.version.outputs.version }} published successfully"
