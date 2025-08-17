@@ -4,10 +4,29 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    
+    <!-- Package Information -->
+    <PackageId>Fluent.Garmin</PackageId>
+    <Title>Fluent Garmin</Title>
+    <Description>A .NET 8 fluent wrapper library for Garmin's FIT SDK, enabling easy creation of workout files for Garmin devices.</Description>
+    <Authors>runcodedad</Authors>
+    <PackageProjectUrl>https://github.com/runcodedad/fluent-garmin</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/runcodedad/fluent-garmin.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>garmin;fit;workout;fluent;fitness;cycling;running</PackageTags>
+    <Version>1.0.0</Version>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Garmin.FIT.Sdk" Version="21.171.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>
