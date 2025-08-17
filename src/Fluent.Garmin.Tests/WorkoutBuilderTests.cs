@@ -177,4 +177,28 @@ public class WorkoutBuilderTests
         Assert.Equal("Build", repeatStep.RepeatSteps[0].Name);
         Assert.Equal("Rest", repeatStep.RepeatSteps[1].Name);
     }
+
+    [Fact]
+    public void IWorkoutBuilder_ShouldSupportDependencyInjection()
+    {
+        // Arrange - Demonstrate interface can be used for DI
+        IWorkoutBuilder builder = new WorkoutBuilder();
+
+        // Act
+        var workout = builder
+            .Name("DI Test Workout")
+            .Sport(Sport.Running)
+            .WarmUp(5, 1)
+            .AddTimeStep("Easy Run", 30, 2)
+            .CoolDown(5, 1)
+            .Build();
+
+        // Assert
+        Assert.Equal("DI Test Workout", workout.Name);
+        Assert.Equal(Sport.Running, workout.Sport);
+        Assert.Equal(3, workout.Steps.Count);
+        Assert.Equal("Warm Up", workout.Steps[0].Name);
+        Assert.Equal("Easy Run", workout.Steps[1].Name);
+        Assert.Equal("Cool Down", workout.Steps[2].Name);
+    }
 }

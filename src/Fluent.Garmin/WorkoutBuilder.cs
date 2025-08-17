@@ -5,23 +5,23 @@ namespace Fluent.Garmin;
 /// <summary>
 /// Builder pattern helper for creating workouts fluently
 /// </summary>
-public class WorkoutBuilder
+public class WorkoutBuilder : IWorkoutBuilder
 {
     private WorkoutModel workout = new WorkoutModel();
 
-    public WorkoutBuilder Name(string name)
+    public IWorkoutBuilder Name(string name)
     {
         workout.Name = name;
         return this;
     }
 
-    public WorkoutBuilder Sport(Sport sport)
+    public IWorkoutBuilder Sport(Sport sport)
     {
         workout.Sport = sport;
         return this;
     }
 
-    public WorkoutBuilder AddStep(string name, DurationType durationType, uint durationValue, 
+    public IWorkoutBuilder AddStep(string name, DurationType durationType, uint durationValue, 
                                 Intensity intensity = Intensity.Active, 
                                 TargetType targetType = TargetType.Open, 
                                 uint? targetZone = null)
@@ -39,22 +39,22 @@ public class WorkoutBuilder
     public WorkoutModel Build() => workout;
 
     // Quick helper methods
-    public WorkoutBuilder WarmUp(uint minutes, uint? zone = 1, TargetType targetType = TargetType.HeartRate)
+    public IWorkoutBuilder WarmUp(uint minutes, uint? zone = 1, TargetType targetType = TargetType.HeartRate)
     {
         return AddStep("Warm Up", DurationType.Time, minutes * 60, Intensity.Warmup, targetType, zone);
     }
 
-    public WorkoutBuilder CoolDown(uint minutes, uint? zone = 1, TargetType targetType = TargetType.HeartRate)
+    public IWorkoutBuilder CoolDown(uint minutes, uint? zone = 1, TargetType targetType = TargetType.HeartRate)
     {
         return AddStep("Cool Down", DurationType.Time, minutes * 60, Intensity.Cooldown, targetType, zone);
     }
 
-    public WorkoutBuilder AddTimeStep(string name, uint minutes, uint? zone = null, TargetType targetType = TargetType.HeartRate)
+    public IWorkoutBuilder AddTimeStep(string name, uint minutes, uint? zone = null, TargetType targetType = TargetType.HeartRate)
     {
         return AddStep(name, DurationType.Time, minutes * 60, Intensity.Active, targetType, zone);
     }
 
-    public WorkoutBuilder AddDistanceStep(string name, uint meters, uint? zone = null, TargetType targetType = TargetType.Speed)
+    public IWorkoutBuilder AddDistanceStep(string name, uint meters, uint? zone = null, TargetType targetType = TargetType.Speed)
     {
         return AddStep(name, DurationType.Distance, meters, Intensity.Active, targetType, zone);
     }
@@ -66,7 +66,7 @@ public class WorkoutBuilder
     /// <param name="repeatCount">Number of times to repeat</param>
     /// <param name="intervalOptions">Configuration for the interval step</param>
     /// <param name="recoveryOptions">Configuration for the recovery step</param>
-    public WorkoutBuilder AddIntervals(string name, uint repeatCount, IntervalOptions intervalOptions, RecoveryOptions recoveryOptions)
+    public IWorkoutBuilder AddIntervals(string name, uint repeatCount, IntervalOptions intervalOptions, RecoveryOptions recoveryOptions)
     {
         var intervalStep = new WorkoutStep
         {
@@ -106,7 +106,7 @@ public class WorkoutBuilder
     /// <param name="name">Name of the repeat</param>
     /// <param name="repeatCount">Number of times to repeat</param>
     /// <param name="steps">Child steps to repeat</param>
-    public WorkoutBuilder AddRepeat(string name, uint repeatCount, params WorkoutStep[] steps)
+    public IWorkoutBuilder AddRepeat(string name, uint repeatCount, params WorkoutStep[] steps)
     {
         var repeatStep = new WorkoutStep
         {
