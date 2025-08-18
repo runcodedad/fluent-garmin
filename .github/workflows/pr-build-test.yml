@@ -3,6 +3,7 @@ name: PR Build and Test
 on:
   pull_request:
     branches: [ main ]
+    paths: [ 'src/**', '.github/workflows/pr-build-test.yml' ]
 
 jobs:
   build-and-test:

@@ -3,14 +3,12 @@ name: Pre-release Build and Publish
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
-    types: [ closed ]
+    paths: [ 'src/**', '.github/workflows/prerelease.yml' ]
 
 jobs:
   prerelease:
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'push' || (github.event.pull_request.merged == true) }}
+    if: ${{ github.event_name == 'push' }}
     
     steps:
     - name: Checkout code
