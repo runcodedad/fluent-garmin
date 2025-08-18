@@ -3,9 +3,11 @@ name: Pre-release Build and Publish
 on:
   push:
     branches: [ main ]
+    paths: [ 'src/**', '.github/workflows/prerelease.yml' ]
   pull_request:
     branches: [ main ]
     types: [ closed ]
+    paths: [ 'src/**', '.github/workflows/prerelease.yml' ]
 
 jobs:
   prerelease:
