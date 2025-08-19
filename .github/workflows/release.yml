@@ -79,9 +79,3 @@ jobs:
         draft: false
         prerelease: false
         files: ./artifacts/*.nupkg
-        
-    - name: Update any existing pre-release
-      run: |
-        # This step will mark any existing pre-release as not pre-release anymore
-        # since we now have an official release
-        echo "Official release v${{ steps.version.outputs.version }} published successfully"
