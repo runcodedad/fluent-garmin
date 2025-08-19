@@ -5,6 +5,9 @@ on:
     branches: [ main ]
     paths: [ 'src/**', '.github/workflows/prerelease.yml' ]
 
+permissions:
+  contents: write
+
 jobs:
   prerelease:
     runs-on: ubuntu-latest

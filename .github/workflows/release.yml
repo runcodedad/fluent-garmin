@@ -9,6 +9,9 @@ on:
         type: string
         default: 'Official release of Fluent.Garmin library.'
 
+permissions:
+  contents: write
+
 jobs:
   release:
     runs-on: ubuntu-latest
