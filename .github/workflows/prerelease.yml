@@ -72,11 +72,6 @@ jobs:
           ```bash
           dotnet add package Fluent.Garmin --version ${{ steps.version.outputs.version }}
           ```
-          
-          **From GitHub Packages:**
-          ```bash
-          dotnet add package Fluent.Garmin --version ${{ steps.version.outputs.version }} --source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
-          ```
         draft: false
         prerelease: true
         files: ./artifacts/*.nupkg
