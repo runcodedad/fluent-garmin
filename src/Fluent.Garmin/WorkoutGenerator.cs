@@ -57,6 +57,57 @@ public static class WorkoutGenerator
         }
     }
 
+    /// <summary>
+    /// Generates workout file bytes from a WorkoutModel
+    /// </summary>
+    /// <param name="workout">The workout model containing all workout details</param>
+    /// <returns>Byte array containing the .fit workout file data</returns>
+    public static byte[] GenerateWorkoutFileBytes(WorkoutModel workout)
+    {
+        if (workout == null || workout.Steps == null || workout.Steps.Count == 0)
+        {
+            throw new ArgumentException("Workout must have at least one step");
+        }
+
+        Encode encodeDemo = new Encode(ProtocolVersion.V10);
+        using var memoryStream = new MemoryStream();
+
+        try
+        {
+            // Write FIT header
+            encodeDemo.Open(memoryStream);
+
+            // Create file ID message
+            var fileIdMesg = new FileIdMesg();
+            fileIdMesg.SetType(Dynastream.Fit.File.Workout);
+            fileIdMesg.SetManufacturer(Manufacturer.Development);
+            fileIdMesg.SetProduct(0);
+            fileIdMesg.SetTimeCreated(new Dynastream.Fit.DateTime((uint)System.DateTime.Now.Ticks));
+            encodeDemo.Write(fileIdMesg);
+
+            // Create workout message
+            var workoutMesg = new WorkoutMesg();
+            workoutMesg.SetWktName(workout.Name ?? "Custom Workout");
+            workoutMesg.SetSport(workout.Sport);
+            workoutMesg.SetCapabilities(32);
+            
+            // Calculate total number of steps including repeat child steps
+            var totalSteps = CalculateTotalSteps(workout.Steps);
+            workoutMesg.SetNumValidSteps((ushort)totalSteps);
+            encodeDemo.Write(workoutMesg);
+
+            // Create workout steps
+            ushort stepIndex = 0;
+            WriteWorkoutSteps(encodeDemo, workout.Steps, ref stepIndex);
+
+            return memoryStream.ToArray();
+        }
+        finally
+        {
+            encodeDemo.Close();
+        }
+    }
+
     private static void SetStepDuration(WorkoutStepMesg workoutStep, StepDuration? duration)
     {
         if (duration == null)
