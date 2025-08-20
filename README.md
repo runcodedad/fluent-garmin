@@ -10,13 +10,14 @@ A .NET 8 fluent wrapper library for Garmin's FIT SDK, enabling easy creation of 
 
 - **Fluent API**: Easy-to-use builder pattern for creating workouts
 - **Full Garmin FIT SDK Integration**: Leverages the official Garmin.FIT.Sdk package
+- **Native AI Support**: Built-in Semantic Kernel plugin for creating workouts from AI-generated JSON plans
 - **Proper Repeat Structure Support**: Uses Garmin's FIT SDK repeat patterns instead of manually creating individual steps
 - **Multiple Target Types**: Support for Heart Rate, Speed, Power, and Cadence targets
 - **Zone and Custom Range Support**: Use predefined zones or custom value ranges
 - **Interval Creation**: Easy interval creation with automatic repeat structure using `AddIntervals()` method
 - **Custom Repeat Patterns**: Flexible repeat structures with `AddRepeat()` method
 - **Example Workouts**: Pre-built examples for common workout types
-- **Comprehensive Testing**: Full test coverage with 23+ unit tests
+- **Comprehensive Testing**: Full test coverage with 33+ unit tests
 
 ## Quick Start
 
@@ -182,6 +183,113 @@ var workout = new WorkoutModel
     }
 };
 ```
+
+## Native AI Support
+
+The Fluent Garmin library includes native AI support through a Semantic Kernel plugin that enables LLMs to create workouts from JSON plans.
+
+### Getting Started with AI
+
+1. **Register the Plugin with Semantic Kernel**
+
+```csharp
+using Microsoft.SemanticKernel;
+using Fluent.Garmin.AI;
+
+var builder = Kernel.CreateBuilder();
+builder.AddOpenAIChatCompletion("gpt-4", "your-api-key");
+
+var kernel = builder.Build();
+
+// Register the Garmin Workout Plugin
+kernel.Plugins.AddFromType<GarminWorkoutPlugin>("garmin");
+```
+
+2. **Use AI to Create Workouts**
+
+```csharp
+var prompt = """
+Create a 45-minute running workout with a 10-minute warm-up in zone 1, 
+25-minute main set alternating between zone 3 and zone 4 every 5 minutes, 
+and a 10-minute cool-down in zone 1. Return as JSON workout plan.
+""";
+
+var result = await kernel.InvokeAsync("garmin", "CreateWorkoutFromJson", 
+    new KernelArguments { ["jsonPlan"] = await GetAIResponse(prompt) });
+
+var workout = result.GetValue<WorkoutModel>();
+WorkoutGenerator.GenerateWorkoutFile(workout, "ai-workout.fit");
+```
+
+### JSON Workout Plan Schema
+
+The AI plugin expects JSON in this format:
+
+```json
+{
+  "name": "AI Generated Workout",
+  "sport": "Running",
+  "steps": [
+    {
+      "name": "Warm Up",
+      "type": "warmup",
+      "duration": {
+        "type": "Time",
+        "value": 600
+      },
+      "target": {
+        "type": "HeartRate",
+        "zone": 1
+      },
+      "intensity": "Warmup"
+    },
+    {
+      "name": "5x400m Intervals",
+      "type": "repeat",
+      "repeatCount": 5,
+      "repeatSteps": [
+        {
+          "name": "400m Effort",
+          "duration": {
+            "type": "Distance",
+            "value": 400
+          },
+          "target": {
+            "type": "Speed",
+            "zone": 4
+          },
+          "intensity": "Active"
+        },
+        {
+          "name": "Recovery",
+          "duration": {
+            "type": "Time",
+            "value": 120
+          },
+          "target": {
+            "type": "Open"
+          },
+          "intensity": "Rest"
+        }
+      ]
+    }
+  ]
+}
+```
+
+### Available Plugin Functions
+
+- **`CreateWorkoutFromJson`**: Converts JSON plan to WorkoutModel
+- **`CreateWorkoutFile`**: Creates FIT file directly from JSON plan  
+- **`ValidateWorkoutPlan`**: Validates JSON format before processing
+
+### Supported Features
+
+- **All Workout Types**: Time-based, distance-based, interval, and repeat structures
+- **Multiple Sports**: Running, cycling, swimming, and other Garmin sports
+- **Target Zones**: Heart rate, speed, power, and cadence zones (1-5)
+- **Custom Ranges**: Specify exact target ranges instead of zones
+- **Flexible Structure**: Simple linear workouts to complex interval patterns
 
 ## Repeat Structure Support
 

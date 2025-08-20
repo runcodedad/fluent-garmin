@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <PackageReference Include="Garmin.FIT.Sdk" Version="21.171.0" />
+    <PackageReference Include="Microsoft.SemanticKernel" Version="1.31.0" />
   </ItemGroup>
 
   <ItemGroup>
