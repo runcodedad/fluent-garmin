@@ -14,9 +14,49 @@ public class GarminWorkoutPlugin
     /// </summary>
     /// <param name="jsonPlan">JSON string containing the workout plan</param>
     /// <returns>A WorkoutModel that can be used to generate FIT files</returns>
-    [KernelFunction, Description("Creates a Garmin workout from a JSON workout plan")]
+    [KernelFunction, Description(@"Creates a Garmin workout from a JSON workout plan. 
+
+JSON Schema:
+{
+  'name': 'string - workout name',
+  'sport': 'enum - Running|Cycling|Swimming|Generic',  
+  'steps': [
+    {
+      'name': 'string - step description',
+      'type': 'string - step|warmup|cooldown|repeat',
+      'duration': {
+        'type': 'enum - Time|Distance|Open|Calories',
+        'value': 'number - seconds for Time, meters for Distance, calories for Calories'
+      },
+      'target': {
+        'type': 'enum - Open|HeartRate|Speed|Power|Cadence',
+        'zone': 'number 1-5 - predefined training zones',
+        'lowValue': 'number - optional custom range low',
+        'highValue': 'number - optional custom range high'
+      },
+      'intensity': 'enum - Active|Rest|Warmup|Cooldown',
+      'repeatCount': 'number - for repeat steps only',
+      'repeatSteps': 'array - child steps for repeat type'
+    }
+  ]
+}
+
+Example:
+{
+  'name': 'AI Running Workout',
+  'sport': 'Running',
+  'steps': [
+    {
+      'name': 'Warm Up',
+      'type': 'warmup', 
+      'duration': {'type': 'Time', 'value': 600},
+      'target': {'type': 'HeartRate', 'zone': 1},
+      'intensity': 'Warmup'
+    }
+  ]
+}")]
     public WorkoutModel CreateWorkoutFromJson(
-        [Description("JSON string containing the workout plan with steps, durations, and targets")] 
+        [Description("JSON string containing the workout plan following the schema above")] 
         string jsonPlan)
     {
         try
@@ -44,9 +84,21 @@ public class GarminWorkoutPlugin
     /// <param name="jsonPlan">JSON string containing the workout plan</param>
     /// <param name="fileName">Output file name (should end with .fit)</param>
     /// <returns>Path to the created workout file</returns>
-    [KernelFunction, Description("Creates a Garmin FIT workout file from a JSON workout plan")]
+    [KernelFunction, Description(@"Creates a Garmin FIT workout file from a JSON workout plan.
+
+Uses the same JSON schema as CreateWorkoutFromJson. The JSON should contain:
+- name: workout name
+- sport: Running, Cycling, Swimming, or Generic  
+- steps: array of workout steps with duration, target, and intensity
+
+Each step should have:
+- name: description
+- type: step, warmup, cooldown, or repeat
+- duration: {type: Time|Distance|Open|Calories, value: number}
+- target: {type: Open|HeartRate|Speed|Power|Cadence, zone: 1-5}
+- intensity: Active, Rest, Warmup, or Cooldown")]
     public string CreateWorkoutFile(
-        [Description("JSON string containing the workout plan")] string jsonPlan,
+        [Description("JSON string containing the workout plan following the workout schema")] string jsonPlan,
         [Description("Output filename for the FIT file (should end with .fit)")] string fileName)
     {
         var workoutModel = CreateWorkoutFromJson(jsonPlan);
@@ -66,9 +118,23 @@ public class GarminWorkoutPlugin
     /// </summary>
     /// <param name="jsonPlan">JSON string to validate</param>
     /// <returns>Validation result with any error messages</returns>
-    [KernelFunction, Description("Validates a JSON workout plan format")]
+    [KernelFunction, Description(@"Validates a JSON workout plan format against the Garmin workout schema.
+
+Checks that the JSON contains valid:
+- name: workout name (string)
+- sport: valid sport type (Running, Cycling, Swimming, Generic)
+- steps: array of workout steps
+
+For each step validates:
+- name: step description
+- type: step, warmup, cooldown, or repeat  
+- duration: proper type and value
+- target: valid target type and zone/range
+- intensity: valid intensity level
+
+Returns 'Valid: ...' for good plans or 'Invalid/Warning: ...' with details.")]
     public string ValidateWorkoutPlan(
-        [Description("JSON string containing the workout plan to validate")] string jsonPlan)
+        [Description("JSON string containing the workout plan to validate against the schema")] string jsonPlan)
     {
         try
         {

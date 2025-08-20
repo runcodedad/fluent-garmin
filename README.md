@@ -207,18 +207,55 @@ kernel.Plugins.AddFromType<GarminWorkoutPlugin>("garmin");
 
 2. **Use AI to Create Workouts**
 
+**Option A: Let Semantic Kernel choose the function**
 ```csharp
 var prompt = """
+Create a 45-minute running workout with a 10-minute warm-up in zone 1, 
+25-minute main set alternating between zone 3 and zone 4 every 5 minutes, 
+and a 10-minute cool-down in zone 1. Return as JSON workout plan and create the FIT file named "ai-workout.fit".
+""";
+
+var result = await kernel.InvokePromptAsync(prompt);
+Console.WriteLine(result.GetValue<string>());
+```
+
+**Option B: Direct plugin function call**
+```csharp
+// First get AI to generate JSON
+var planPrompt = """
 Create a 45-minute running workout with a 10-minute warm-up in zone 1, 
 25-minute main set alternating between zone 3 and zone 4 every 5 minutes, 
 and a 10-minute cool-down in zone 1. Return as JSON workout plan.
 """;
 
+var aiResponse = await kernel.InvokePromptAsync(planPrompt);
+var jsonPlan = aiResponse.GetValue<string>();
+
+// Then use plugin to create workout
 var result = await kernel.InvokeAsync("garmin", "CreateWorkoutFromJson", 
-    new KernelArguments { ["jsonPlan"] = await GetAIResponse(prompt) });
+    new KernelArguments { ["jsonPlan"] = jsonPlan });
 
 var workout = result.GetValue<WorkoutModel>();
 WorkoutGenerator.GenerateWorkoutFile(workout, "ai-workout.fit");
+```
+
+**Option C: Direct file creation**
+```csharp
+var planPrompt = """
+Create a 30-minute cycling workout with intervals. Return as JSON workout plan.
+""";
+
+var aiResponse = await kernel.InvokePromptAsync(planPrompt);
+var jsonPlan = aiResponse.GetValue<string>();
+
+var result = await kernel.InvokeAsync("garmin", "CreateWorkoutFile", 
+    new KernelArguments { 
+        ["jsonPlan"] = jsonPlan,
+        ["fileName"] = "cycling-workout.fit"
+    });
+
+var filePath = result.GetValue<string>();
+Console.WriteLine($"Created: {filePath}");
 ```
 
 ### JSON Workout Plan Schema
@@ -276,6 +313,8 @@ The AI plugin expects JSON in this format:
   ]
 }
 ```
+
+For a complete working example and comprehensive documentation, see [AI Plugin Example](docs/AI-Example.md).
 
 ### Available Plugin Functions
 
