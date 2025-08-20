@@ -81,15 +81,6 @@ jobs:
         MAIN_ASSEMBLY_VERSION=$(xmllint --xpath "string(//Project/PropertyGroup/AssemblyVersion)" main-Fluent.Garmin.csproj)
         MAIN_FILE_VERSION=$(xmllint --xpath "string(//Project/PropertyGroup/FileVersion)" main-Fluent.Garmin.csproj)
         
-        echo "main_version=$MAIN_VERSION" >> $GITHUB_OUTPUT
-        echo "main_assembly_version=$MAIN_ASSEMBLY_VERSION" >> $GITHUB_OUTPUT
-        echo "main_file_version=$MAIN_FILE_VERSION" >> $GITHUB_OUTPUT
-        
-        echo "Main Branch Versions:"
-        echo "Version: $MAIN_VERSION"
-        echo "AssemblyVersion: $MAIN_ASSEMBLY_VERSION"
-        echo "FileVersion: $MAIN_FILE_VERSION"
-
         if [[ -z "$MAIN_VERSION" || -z "$MAIN_ASSEMBLY_VERSION" || -z "$MAIN_FILE_VERSION" ]]; then
           echo "::error::Failed to extract version information from main branch csproj file."
           echo "::error::MAIN_VERSION: '$MAIN_VERSION'"
