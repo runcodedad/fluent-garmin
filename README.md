@@ -301,33 +301,33 @@ The AI plugin expects JSON in this format:
     },
     {
       "name": "5x400m Intervals",
-      "type": "repeat",
+      "type": "interval",
       "repeatCount": 5,
-      "repeatSteps": [
-        {
-          "name": "400m Effort",
-          "duration": {
-            "type": "Distance",
-            "value": 400
-          },
-          "target": {
-            "type": "Speed",
-            "zone": 4
-          },
-          "intensity": "Active"
-        },
-        {
-          "name": "Recovery",
-          "duration": {
-            "type": "Time",
-            "value": 120
-          },
-          "target": {
-            "type": "Open"
-          },
-          "intensity": "Rest"
-        }
-      ]
+      "intervalOptions": {
+        "durationType": "Distance",
+        "value": 400,
+        "zone": 4,
+        "targetType": "Speed"
+      },
+      "recoveryOptions": {
+        "durationType": "Time",
+        "value": 120,
+        "zone": 2,
+        "targetType": "HeartRate"
+      }
+    },
+    {
+      "name": "Cool Down",
+      "type": "cooldown",
+      "duration": {
+        "type": "Time",
+        "value": 300
+      },
+      "target": {
+        "type": "HeartRate",
+        "zone": 1
+      },
+      "intensity": "Cooldown"
     }
   ]
 }

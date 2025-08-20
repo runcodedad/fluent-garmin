@@ -18,40 +18,68 @@ public class GarminWorkoutPlugin
 
 JSON Schema:
 {
-  'name': 'string - workout name',
-  'sport': 'enum - Running|Cycling|Swimming|Generic',  
-  'steps': [
+  ""name"": ""string - workout name"",
+  ""sport"": ""enum - Running|Cycling|Swimming|Generic"",  
+  ""steps"": [
     {
-      'name': 'string - step description',
-      'type': 'string - step|warmup|cooldown|repeat',
-      'duration': {
-        'type': 'enum - Time|Distance|Open|Calories',
-        'value': 'number - seconds for Time, meters for Distance, calories for Calories'
+      ""name"": ""string - step description"",
+      ""type"": ""string - step|warmup|cooldown|interval"",
+      ""duration"": {
+        ""type"": ""enum - Time|Distance|Open|Calories"",
+        ""value"": ""number - seconds for Time, meters for Distance, calories for Calories""
       },
-      'target': {
-        'type': 'enum - Open|HeartRate|Speed|Power|Cadence',
-        'zone': 'number 1-5 - predefined training zones',
-        'lowValue': 'number - optional custom range low',
-        'highValue': 'number - optional custom range high'
+      ""target"": {
+        ""type"": ""enum - Open|HeartRate|Speed|Power|Cadence"",
+        ""zone"": ""number 1-5 - predefined training zones"",
+        ""lowValue"": ""number - optional custom range low"",
+        ""highValue"": ""number - optional custom range high""
       },
-      'intensity': 'enum - Active|Rest|Warmup|Cooldown',
-      'repeatCount': 'number - for repeat steps only',
-      'repeatSteps': 'array - child steps for repeat type'
+      ""intensity"": ""enum - Active|Rest|Warmup|Cooldown"",
+      ""repeatCount"": ""number - for interval steps only"",
+      ""intervalOptions"": {
+        ""durationType"": ""enum - Time|Distance|Open|Calories"",
+        ""value"": ""number - duration value"",
+        ""zone"": ""number 1-5 - target zone"",
+        ""targetType"": ""enum - Open|HeartRate|Speed|Power|Cadence""
+      },
+      ""recoveryOptions"": {
+        ""durationType"": ""enum - Time|Distance|Open|Calories"",
+        ""value"": ""number - duration value"",
+        ""zone"": ""number 1-5 - optional target zone"",
+        ""targetType"": ""enum - Open|HeartRate|Speed|Power|Cadence""
+      }
     }
   ]
 }
 
 Example:
 {
-  'name': 'AI Running Workout',
-  'sport': 'Running',
-  'steps': [
+  ""name"": ""AI Running Workout"",
+  ""sport"": ""Running"",
+  ""steps"": [
     {
-      'name': 'Warm Up',
-      'type': 'warmup', 
-      'duration': {'type': 'Time', 'value': 600},
-      'target': {'type': 'HeartRate', 'zone': 1},
-      'intensity': 'Warmup'
+      ""name"": ""Warm Up"",
+      ""type"": ""warmup"", 
+      ""duration"": {""type"": ""Time"", ""value"": 600},
+      ""target"": {""type"": ""HeartRate"", ""zone"": 1},
+      ""intensity"": ""Warmup""
+    },
+    {
+      ""name"": ""5x400m Intervals"",
+      ""type"": ""interval"",
+      ""repeatCount"": 5,
+      ""intervalOptions"": {
+        ""durationType"": ""Distance"",
+        ""value"": 400,
+        ""zone"": 4,
+        ""targetType"": ""Speed""
+      },
+      ""recoveryOptions"": {
+        ""durationType"": ""Time"",
+        ""value"": 120,
+        ""zone"": 2,
+        ""targetType"": ""HeartRate""
+      }
     }
   ]
 }")]
@@ -93,10 +121,15 @@ Uses the same JSON schema as CreateWorkoutFromJson. The JSON should contain:
 
 Each step should have:
 - name: description
-- type: step, warmup, cooldown, or repeat
-- duration: {type: Time|Distance|Open|Calories, value: number}
-- target: {type: Open|HeartRate|Speed|Power|Cadence, zone: 1-5}
-- intensity: Active, Rest, Warmup, or Cooldown")]
+- type: step, warmup, cooldown, or interval
+- duration: {""type"": ""Time|Distance|Open|Calories"", ""value"": number}
+- target: {""type"": ""Open|HeartRate|Speed|Power|Cadence"", ""zone"": 1-5}
+- intensity: Active, Rest, Warmup, or Cooldown
+
+For interval steps, also include:
+- repeatCount: number of repetitions
+- intervalOptions: {""durationType"": ""Time|Distance"", ""value"": number, ""zone"": 1-5, ""targetType"": ""Speed|HeartRate|Power""}
+- recoveryOptions: {""durationType"": ""Time|Distance"", ""value"": number, ""zone"": 1-5, ""targetType"": ""Open|HeartRate""}")]
     public string CreateWorkoutFile(
         [Description("JSON string containing the workout plan following the workout schema")] string jsonPlan,
         [Description("Output filename for the FIT file (should end with .fit)")] string fileName)
@@ -127,10 +160,15 @@ Uses the same JSON schema as CreateWorkoutFromJson. The JSON should contain:
 
 Each step should have:
 - name: description
-- type: step, warmup, cooldown, or repeat
-- duration: {type: Time|Distance|Open|Calories, value: number}
-- target: {type: Open|HeartRate|Speed|Power|Cadence, zone: 1-5}
+- type: step, warmup, cooldown, or interval
+- duration: {""type"": ""Time|Distance|Open|Calories"", ""value"": number}
+- target: {""type"": ""Open|HeartRate|Speed|Power|Cadence"", ""zone"": 1-5}
 - intensity: Active, Rest, Warmup, or Cooldown
+
+For interval steps, also include:
+- repeatCount: number of repetitions  
+- intervalOptions: {""durationType"": ""Time|Distance"", ""value"": number, ""zone"": 1-5, ""targetType"": ""Speed|HeartRate|Power""}
+- recoveryOptions: {""durationType"": ""Time|Distance"", ""value"": number, ""zone"": 1-5, ""targetType"": ""Open|HeartRate""}
 
 Returns the workout file as bytes so the caller can save it where they choose.")]
     public byte[] CreateWorkoutFileBytes(
@@ -154,12 +192,16 @@ Checks that the JSON contains valid:
 
 For each step validates:
 - name: step description
-- type: step, warmup, cooldown, or repeat  
+- type: step, warmup, cooldown, or interval  
 - duration: proper type and value
 - target: valid target type and zone/range
 - intensity: valid intensity level
 
-Returns 'Valid: ...' for good plans or 'Invalid/Warning: ...' with details.")]
+For interval steps validates:
+- repeatCount: number of repetitions
+- intervalOptions and recoveryOptions: proper structure with duration, target, and zone
+
+Returns ""Valid: ..."" for good plans or ""Invalid/Warning: ..."" with details.")]
     public string ValidateWorkoutPlan(
         [Description("JSON string containing the workout plan to validate against the schema")] string jsonPlan)
     {
@@ -190,6 +232,16 @@ Returns 'Valid: ...' for good plans or 'Invalid/Warning: ...' with details.")]
 
                 if (step.Duration.Value == 0 && step.Duration.Type != DurationType.Open)
                     return $"Warning: Step {i + 1} ({step.Name}) has zero duration";
+
+                if (step.Type.Equals("interval", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (step.IntervalOptions == null)
+                        return $"Warning: Interval step {i + 1} ({step.Name}) has no interval options";
+                    if (step.RecoveryOptions == null)
+                        return $"Warning: Interval step {i + 1} ({step.Name}) has no recovery options";
+                    if (step.RepeatCount == 0)
+                        return $"Warning: Interval step {i + 1} ({step.Name}) has zero repeat count";
+                }
 
                 if (step.Type.Equals("repeat", StringComparison.OrdinalIgnoreCase) && step.RepeatSteps.Count == 0)
                     return $"Warning: Repeat step {i + 1} ({step.Name}) has no child steps";
@@ -241,7 +293,31 @@ Returns 'Valid: ...' for good plans or 'Invalid/Warning: ...' with details.")]
                 builder.CoolDown(stepPlan.Duration.Minutes, stepPlan.Target.Zone, stepPlan.Target.Type);
                 break;
 
+            case "interval":
+                if (stepPlan.IntervalOptions != null && stepPlan.RecoveryOptions != null)
+                {
+                    var intervalOptions = new IntervalOptions
+                    {
+                        DurationType = stepPlan.IntervalOptions.DurationType,
+                        Value = stepPlan.IntervalOptions.Value,
+                        Zone = stepPlan.IntervalOptions.Zone,
+                        TargetType = stepPlan.IntervalOptions.TargetType
+                    };
+                    
+                    var recoveryOptions = new RecoveryOptions
+                    {
+                        DurationType = stepPlan.RecoveryOptions.DurationType,
+                        Value = stepPlan.RecoveryOptions.Value,
+                        Zone = stepPlan.RecoveryOptions.Zone,
+                        TargetType = stepPlan.RecoveryOptions.TargetType
+                    };
+                    
+                    builder.AddIntervals(stepPlan.Name, stepPlan.RepeatCount, intervalOptions, recoveryOptions);
+                }
+                break;
+
             case "repeat":
+                // Support legacy repeat format for backward compatibility
                 if (stepPlan.RepeatSteps.Count > 0)
                 {
                     var repeatSteps = stepPlan.RepeatSteps.Select(ConvertToWorkoutStep).ToArray();

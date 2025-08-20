@@ -62,9 +62,19 @@ public class StepPlan
     public uint RepeatCount { get; set; } = 1;
 
     /// <summary>
-    /// For repeat steps: child steps to repeat
+    /// For repeat steps: child steps to repeat (deprecated - use IntervalOptions and RecoveryOptions instead)
     /// </summary>
     public List<StepPlan> RepeatSteps { get; set; } = new();
+
+    /// <summary>
+    /// For interval steps: configuration for the interval portion
+    /// </summary>
+    public IntervalOptionsPlan? IntervalOptions { get; set; }
+
+    /// <summary>
+    /// For interval steps: configuration for the recovery portion
+    /// </summary>
+    public RecoveryOptionsPlan? RecoveryOptions { get; set; }
 }
 
 /// <summary>
@@ -119,4 +129,60 @@ public class TargetPlan
     /// Custom high value for target range
     /// </summary>
     public uint? HighValue { get; set; }
+}
+
+/// <summary>
+/// JSON-friendly model for interval options
+/// </summary>
+public class IntervalOptionsPlan
+{
+    /// <summary>
+    /// Duration type for the interval
+    /// </summary>
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public DurationType DurationType { get; set; } = DurationType.Time;
+
+    /// <summary>
+    /// Duration value (seconds for time, meters for distance, etc.)
+    /// </summary>
+    public uint Value { get; set; }
+
+    /// <summary>
+    /// Target zone for the interval (1-5 for predefined zones)
+    /// </summary>
+    public uint Zone { get; set; } = 1;
+
+    /// <summary>
+    /// Target type for the interval
+    /// </summary>
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public TargetType TargetType { get; set; } = TargetType.Speed;
+}
+
+/// <summary>
+/// JSON-friendly model for recovery options
+/// </summary>
+public class RecoveryOptionsPlan
+{
+    /// <summary>
+    /// Duration type for the recovery
+    /// </summary>
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public DurationType DurationType { get; set; } = DurationType.Time;
+
+    /// <summary>
+    /// Duration value (seconds for time, meters for distance, etc.)
+    /// </summary>
+    public uint Value { get; set; }
+
+    /// <summary>
+    /// Target zone for the recovery (1-5 for predefined zones)
+    /// </summary>
+    public uint? Zone { get; set; }
+
+    /// <summary>
+    /// Target type for the recovery
+    /// </summary>
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public TargetType TargetType { get; set; } = TargetType.Open;
 }

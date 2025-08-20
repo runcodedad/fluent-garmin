@@ -144,7 +144,7 @@ class Program
             var prompt = """
             Create a 35-minute swimming workout with:
             - 5-minute easy warm-up
-            - 25-minute main set with 50m sprints and 50m recovery (repeat 10 times)
+            - 25-minute main set with 50m sprints and 50m recovery (4 interval repetitions)
             - 5-minute easy cool-down
             Return as JSON workout plan.
             """;
@@ -199,24 +199,20 @@ class Program
                 },
                 {
                     "name": "Main Set",
-                    "type": "repeat",
+                    "type": "interval",
                     "repeatCount": 4,
-                    "repeatSteps": [
-                        {
-                            "name": "100m Fast",
-                            "type": "step",
-                            "duration": { "type": "Distance", "value": 100 },
-                            "target": { "type": "Open" },
-                            "intensity": "Active"
-                        },
-                        {
-                            "name": "50m Easy",
-                            "type": "step", 
-                            "duration": { "type": "Distance", "value": 50 },
-                            "target": { "type": "Open" },
-                            "intensity": "Rest"
-                        }
-                    ]
+                    "intervalOptions": {
+                        "durationType": "Distance",
+                        "value": 100,
+                        "zone": 1,
+                        "targetType": "Open"
+                    },
+                    "recoveryOptions": {
+                        "durationType": "Distance", 
+                        "value": 50,
+                        "zone": 1,
+                        "targetType": "Open"
+                    }
                 },
                 {
                     "name": "Cool Down",
@@ -294,7 +290,7 @@ The plugin expects workout plans in this JSON format:
   "steps": [
     {
       "name": "Step Description", 
-      "type": "step|warmup|cooldown|repeat",
+      "type": "step|warmup|cooldown|interval",
       "duration": {
         "type": "Time|Distance|Open|Calories",
         "value": "number (seconds for Time, meters for Distance)"
@@ -306,10 +302,19 @@ The plugin expects workout plans in this JSON format:
         "highValue": "number (optional, for custom ranges)"
       },
       "intensity": "Active|Rest|Warmup|Cooldown",
-      "repeatCount": "number (for repeat steps only)",
-      "repeatSteps": [
-        "... nested steps for repeat type ..."
-      ]
+      "repeatCount": "number (for interval steps only)",
+      "intervalOptions": {
+        "durationType": "Time|Distance|Open|Calories",
+        "value": "number",
+        "zone": "number 1-5",
+        "targetType": "Open|HeartRate|Speed|Power|Cadence"
+      },
+      "recoveryOptions": {
+        "durationType": "Time|Distance|Open|Calories",
+        "value": "number", 
+        "zone": "number 1-5 (optional)",
+        "targetType": "Open|HeartRate|Speed|Power|Cadence"
+      }
     }
   ]
 }
@@ -322,7 +327,7 @@ The plugin expects workout plans in this JSON format:
 3. **Comprehensive Validation**: Built-in JSON validation with helpful error messages
 4. **Flexible Duration Types**: Time, distance, open-ended, or calorie-based
 5. **Multiple Target Types**: Heart rate zones, speed, power, cadence
-6. **Repeat Structures**: Complex interval and repeat patterns
+6. **Interval Structures**: Complex interval and recovery patterns
 7. **All Sports Supported**: Running, cycling, swimming, and generic workouts
 
 ## Error Handling

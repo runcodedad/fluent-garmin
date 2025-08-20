@@ -330,4 +330,62 @@ public class GarminWorkoutPluginTests
         Assert.Equal(600u, duration.Value);
         Assert.Equal(10u, duration.Minutes);
     }
+
+    [Fact]
+    public void CreateWorkoutFromJson_ShouldHandleIntervalStructure()
+    {
+        // Arrange
+        var json = """
+        {
+            "name": "Interval Workout",
+            "sport": "Running",
+            "steps": [
+                {
+                    "name": "5x400m Track Intervals",
+                    "type": "interval",
+                    "repeatCount": 5,
+                    "intervalOptions": {
+                        "durationType": "Distance",
+                        "value": 400,
+                        "zone": 4,
+                        "targetType": "Speed"
+                    },
+                    "recoveryOptions": {
+                        "durationType": "Time",
+                        "value": 120,
+                        "zone": 2,
+                        "targetType": "HeartRate"
+                    }
+                }
+            ]
+        }
+        """;
+
+        // Act
+        var workout = _plugin.CreateWorkoutFromJson(json);
+
+        // Assert
+        Assert.Equal("Interval Workout", workout.Name);
+        Assert.Single(workout.Steps);
+        
+        var intervalSet = workout.Steps[0];
+        Assert.Equal("5x400m Track Intervals", intervalSet.Name);
+        Assert.True(intervalSet.IsRepeat);
+        Assert.Equal(5u, intervalSet.RepeatCount);
+        Assert.Equal(2, intervalSet.RepeatSteps.Count);
+        
+        var interval = intervalSet.RepeatSteps[0];
+        Assert.Equal("Interval", interval.Name);
+        Assert.Equal(400u, interval.Duration?.Value);
+        Assert.Equal(DurationType.Distance, interval.Duration?.Type);
+        Assert.Equal(TargetType.Speed, interval.Target?.Type);
+        Assert.Equal(4u, interval.Target?.Zone);
+        
+        var recovery = intervalSet.RepeatSteps[1];
+        Assert.Equal("Recovery", recovery.Name);
+        Assert.Equal(120u, recovery.Duration?.Value);
+        Assert.Equal(DurationType.Time, recovery.Duration?.Type);
+        Assert.Equal(TargetType.HeartRate, recovery.Target?.Type);
+        Assert.Equal(2u, recovery.Target?.Zone);
+    }
 }
