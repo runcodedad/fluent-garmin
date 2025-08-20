@@ -32,7 +32,9 @@ jobs:
           echo "fluent_garmin_changed=false" >> $GITHUB_OUTPUT
           echo "No files changed in src/Fluent.Garmin/"
         fi
-
+    - name: Install xmllint
+      run: sudo apt-get install -y libxml2-utils
+    
     - name: Get version from PR branch
       id: pr-version
       if: steps.check-changes.outputs.fluent_garmin_changed == 'true'
