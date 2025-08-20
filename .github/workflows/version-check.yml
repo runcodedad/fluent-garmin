@@ -70,6 +70,10 @@ jobs:
       run: |
         # Get the version from main branch
         git checkout origin/main -- src/Fluent.Garmin/Fluent.Garmin.csproj
+        if [ $? -ne 0 ]; then
+          echo "Error: Failed to checkout src/Fluent.Garmin/Fluent.Garmin.csproj from origin/main. The file may not exist on the main branch or there may be git conflicts."
+          exit 1
+        fi
         cp src/Fluent.Garmin/Fluent.Garmin.csproj main-Fluent.Garmin.csproj
         git checkout HEAD -- src/Fluent.Garmin/Fluent.Garmin.csproj
         
