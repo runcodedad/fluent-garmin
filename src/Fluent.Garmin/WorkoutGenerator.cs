@@ -69,12 +69,12 @@ public static class WorkoutGenerator
         {
             case DurationType.Time:
                 workoutStep.SetDurationType(WktStepDuration.Time);
-                workoutStep.SetDurationTime(duration.Value * 1000); // Convert seconds to milliseconds
+                workoutStep.SetDurationTime(duration.Value );
                 break;
 
             case DurationType.Distance:
                 workoutStep.SetDurationType(WktStepDuration.Distance);
-                workoutStep.SetDurationDistance(duration.Value * 100); // Convert meters to centimeters
+                workoutStep.SetDurationDistance(duration.Value);
                 break;
 
             case DurationType.Calories:
@@ -89,12 +89,12 @@ public static class WorkoutGenerator
 
             case DurationType.RepeatUntilTime:
                 workoutStep.SetDurationType(WktStepDuration.RepeatUntilTime);
-                workoutStep.SetDurationTime(duration.Value * 1000);
+                workoutStep.SetDurationTime(duration.Value);
                 break;
 
             case DurationType.RepeatUntilDistance:
                 workoutStep.SetDurationType(WktStepDuration.RepeatUntilDistance);
-                workoutStep.SetDurationDistance(duration.Value * 100);
+                workoutStep.SetDurationDistance(duration.Value);
                 break;
 
             case DurationType.Open:
