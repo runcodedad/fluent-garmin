@@ -38,19 +38,21 @@ jobs:
       if: steps.check-changes.outputs.fluent_garmin_changed == 'true'
       run: |
         # Extract version information from the PR branch
-        VERSION=$(xmllint --xpath "string(//Version[1])" src/Fluent.Garmin/Fluent.Garmin.csproj 2>/dev/null)
-        ASSEMBLY_VERSION=$(xmllint --xpath "string(//AssemblyVersion[1])" src/Fluent.Garmin/Fluent.Garmin.csproj 2>/dev/null)
-        FILE_VERSION=$(xmllint --xpath "string(//FileVersion[1])" src/Fluent.Garmin/Fluent.Garmin.csproj 2>/dev/null)
+        VERSION=$(xmllint --xpath "string(//Project/PropertyGroup/Version)" src/Fluent.Garmin/Fluent.Garmin.csproj 2>/dev/null)
+        ASSEMBLY_VERSION=$(xmllint --xpath "string(//Project/PropertyGroup/AssemblyVersion)" src/Fluent.Garmin/Fluent.Garmin.csproj 2>/dev/null)
+        FILE_VERSION=$(xmllint --xpath "string(//Project/PropertyGroup/FileVersion)" src/Fluent.Garmin/Fluent.Garmin.csproj 2>/dev/null)
         
         if [[ -z "$VERSION" ]]; then
           echo "Error: Could not extract <Version> from src/Fluent.Garmin/Fluent.Garmin.csproj"
           exit 1
         fi
         if [[ -z "$ASSEMBLY_VERSION" ]]; then
-          echo "Warning: Could not extract <AssemblyVersion> from src/Fluent.Garmin/Fluent.Garmin.csproj"
+          echo "Error: Could not extract <AssemblyVersion> from src/Fluent.Garmin/Fluent.Garmin.csproj"
+          exit 1
         fi
         if [[ -z "$FILE_VERSION" ]]; then
-          echo "Warning: Could not extract <FileVersion> from src/Fluent.Garmin/Fluent.Garmin.csproj"
+          echo "Error: Could not extract <FileVersion> from src/Fluent.Garmin/Fluent.Garmin.csproj"
+          exit 1
         fi
         
         echo "version=$VERSION" >> $GITHUB_OUTPUT
