@@ -41,10 +41,13 @@ class Program
         // Example 2: Direct plugin function calls
         await DirectPluginCalls(kernel);
 
-        // Example 3: Manual JSON creation
+        // Example 3: Get workout bytes for custom file handling
+        await WorkoutBytesExample(kernel);
+
+        // Example 4: Manual JSON creation
         await ManualJsonExample();
 
-        // Example 4: Validation example
+        // Example 5: Validation example
         await ValidationExample(kernel);
     }
 
@@ -130,7 +133,53 @@ class Program
     }
 
     /// <summary>
-    /// Example 3: Manual JSON creation without AI
+    /// Example 3: Get workout file bytes for custom file handling
+    /// </summary>
+    static async Task WorkoutBytesExample(Kernel kernel)
+    {
+        Console.WriteLine("=== Example 3: Workout File Bytes ===");
+        
+        try
+        {
+            var prompt = """
+            Create a 35-minute swimming workout with:
+            - 5-minute easy warm-up
+            - 25-minute main set with 50m sprints and 50m recovery (repeat 10 times)
+            - 5-minute easy cool-down
+            Return as JSON workout plan.
+            """;
+
+            var aiResponse = await kernel.InvokePromptAsync(prompt);
+            var jsonPlan = aiResponse.GetValue<string>();
+            
+            Console.WriteLine("Generated JSON plan:");
+            Console.WriteLine(jsonPlan);
+            Console.WriteLine();
+
+            // Get workout file as bytes
+            var bytesResult = await kernel.InvokeAsync("garmin", "CreateWorkoutFileBytes",
+                new KernelArguments { ["jsonPlan"] = jsonPlan });
+            
+            var workoutBytes = bytesResult.GetValue<byte[]>();
+            Console.WriteLine($"Workout file generated: {workoutBytes.Length} bytes");
+
+            // Save to custom location
+            var customPath = Path.Combine("workouts", "custom-swimming-workout.fit");
+            Directory.CreateDirectory(Path.GetDirectoryName(customPath));
+            await File.WriteAllBytesAsync(customPath, workoutBytes);
+            
+            Console.WriteLine($"Saved to custom location: {customPath}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+        
+        Console.WriteLine();
+    }
+
+    /// <summary>
+    /// Example 4: Manual JSON creation without AI
     /// </summary>
     static async Task ManualJsonExample()
     {
@@ -202,11 +251,11 @@ class Program
     }
 
     /// <summary>
-    /// Example 4: JSON validation
+    /// Example 5: JSON validation
     /// </summary>
     static async Task ValidationExample(Kernel kernel)
     {
-        Console.WriteLine("=== Example 4: JSON Validation ===");
+        Console.WriteLine("=== Example 5: JSON Validation ===");
         
         var invalidJson = """
         {

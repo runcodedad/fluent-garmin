@@ -258,6 +258,25 @@ var filePath = result.GetValue<string>();
 Console.WriteLine($"Created: {filePath}");
 ```
 
+**Option D: Get workout file bytes**
+```csharp
+var planPrompt = """
+Create a 20-minute tempo run workout. Return as JSON workout plan.
+""";
+
+var aiResponse = await kernel.InvokePromptAsync(planPrompt);
+var jsonPlan = aiResponse.GetValue<string>();
+
+var result = await kernel.InvokeAsync("garmin", "CreateWorkoutFileBytes", 
+    new KernelArguments { ["jsonPlan"] = jsonPlan });
+
+var fileBytes = result.GetValue<byte[]>();
+
+// Save wherever you want
+await File.WriteAllBytesAsync("custom-path/my-workout.fit", fileBytes);
+Console.WriteLine($"Created workout with {fileBytes.Length} bytes");
+```
+
 ### JSON Workout Plan Schema
 
 The AI plugin expects JSON in this format:

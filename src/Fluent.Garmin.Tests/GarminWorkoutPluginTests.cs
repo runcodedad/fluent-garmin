@@ -239,6 +239,52 @@ public class GarminWorkoutPluginTests
     }
 
     [Fact]
+    public void CreateWorkoutFileBytes_ShouldReturnValidFitBytes()
+    {
+        // Arrange
+        var json = """
+        {
+            "name": "AI Bytes Test Workout",
+            "sport": "Running",
+            "steps": [
+                {
+                    "name": "Tempo Run",
+                    "type": "step",
+                    "duration": {
+                        "type": "Time",
+                        "value": 1800
+                    },
+                    "target": {
+                        "type": "HeartRate",
+                        "zone": 4
+                    },
+                    "intensity": "Active"
+                }
+            ]
+        }
+        """;
+
+        // Act
+        var bytes = _plugin.CreateWorkoutFileBytes(json);
+
+        // Assert
+        Assert.NotNull(bytes);
+        Assert.True(bytes.Length > 0);
+        
+        // Verify it's a valid FIT file by checking the header
+        // FIT files start with a specific header format
+        Assert.True(bytes.Length >= 14); // Minimum FIT header size
+        
+        // Optional: Save to verify it works
+        var testFileName = "test-bytes-workout.fit";
+        System.IO.File.WriteAllBytes(testFileName, bytes);
+        Assert.True(System.IO.File.Exists(testFileName));
+        
+        // Cleanup
+        System.IO.File.Delete(testFileName);
+    }
+
+    [Fact]
     public void WorkoutPlan_ShouldSerializeAndDeserialize()
     {
         // Arrange

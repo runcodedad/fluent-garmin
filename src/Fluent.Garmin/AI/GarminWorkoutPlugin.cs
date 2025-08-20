@@ -14,7 +14,7 @@ public class GarminWorkoutPlugin
     /// </summary>
     /// <param name="jsonPlan">JSON string containing the workout plan</param>
     /// <returns>A WorkoutModel that can be used to generate FIT files</returns>
-    [KernelFunction, Description(@"Creates a Garmin workout from a JSON workout plan. 
+    [KernelFunction("CreateWorkoutFromJson"), Description(@"Creates a Garmin workout from a JSON workout plan. 
 
 JSON Schema:
 {
@@ -84,7 +84,7 @@ Example:
     /// <param name="jsonPlan">JSON string containing the workout plan</param>
     /// <param name="fileName">Output file name (should end with .fit)</param>
     /// <returns>Path to the created workout file</returns>
-    [KernelFunction, Description(@"Creates a Garmin FIT workout file from a JSON workout plan.
+    [KernelFunction("CreateWorkoutFile"), Description(@"Creates a Garmin FIT workout file from a JSON workout plan.
 
 Uses the same JSON schema as CreateWorkoutFromJson. The JSON should contain:
 - name: workout name
@@ -114,11 +114,38 @@ Each step should have:
     }
 
     /// <summary>
+    /// Creates Garmin workout file bytes from a JSON plan
+    /// </summary>
+    /// <param name="jsonPlan">JSON string containing the workout plan</param>
+    /// <returns>Byte array containing the .fit workout file data</returns>
+    [KernelFunction("CreateWorkoutFileBytes"), Description(@"Creates a Garmin FIT workout file as byte array from a JSON workout plan.
+
+Uses the same JSON schema as CreateWorkoutFromJson. The JSON should contain:
+- name: workout name
+- sport: Running, Cycling, Swimming, or Generic  
+- steps: array of workout steps with duration, target, and intensity
+
+Each step should have:
+- name: description
+- type: step, warmup, cooldown, or repeat
+- duration: {type: Time|Distance|Open|Calories, value: number}
+- target: {type: Open|HeartRate|Speed|Power|Cadence, zone: 1-5}
+- intensity: Active, Rest, Warmup, or Cooldown
+
+Returns the workout file as bytes so the caller can save it where they choose.")]
+    public byte[] CreateWorkoutFileBytes(
+        [Description("JSON string containing the workout plan following the workout schema")] string jsonPlan)
+    {
+        var workoutModel = CreateWorkoutFromJson(jsonPlan);
+        return WorkoutGenerator.GenerateWorkoutFileBytes(workoutModel);
+    }
+
+    /// <summary>
     /// Validates a JSON workout plan without creating the workout
     /// </summary>
     /// <param name="jsonPlan">JSON string to validate</param>
     /// <returns>Validation result with any error messages</returns>
-    [KernelFunction, Description(@"Validates a JSON workout plan format against the Garmin workout schema.
+    [KernelFunction("ValidateWorkoutPlan"), Description(@"Validates a JSON workout plan format against the Garmin workout schema.
 
 Checks that the JSON contains valid:
 - name: workout name (string)
