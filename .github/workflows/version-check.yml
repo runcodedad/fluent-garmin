@@ -1,0 +1,171 @@
+name: Version Check
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths: [ 'src/Fluent.Garmin/**' ]
+
+jobs:
+  version-check:
+    runs-on: ubuntu-latest
+    name: Check Version Updated
+
+    steps:
+    - name: Checkout PR branch
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Get changed files
+      id: changed-files
+      uses: tj-actions/changed-files@v44
+      with:
+        files: 'src/Fluent.Garmin/**'
+
+    - name: Check if Fluent.Garmin files changed
+      id: check-changes
+      run: |
+        if [[ "${{ steps.changed-files.outputs.any_changed }}" == "true" ]]; then
+          echo "fluent_garmin_changed=true" >> $GITHUB_OUTPUT
+          echo "Files changed in src/Fluent.Garmin/"
+        else
+          echo "fluent_garmin_changed=false" >> $GITHUB_OUTPUT
+          echo "No files changed in src/Fluent.Garmin/"
+        fi
+
+    - name: Get version from PR branch
+      id: pr-version
+      if: steps.check-changes.outputs.fluent_garmin_changed == 'true'
+      run: |
+        # Extract version information from the PR branch
+        VERSION=$(xmllint --xpath "string(//Project/PropertyGroup/Version)" src/Fluent.Garmin/Fluent.Garmin.csproj 2>/dev/null)
+        ASSEMBLY_VERSION=$(xmllint --xpath "string(//Project/PropertyGroup/AssemblyVersion)" src/Fluent.Garmin/Fluent.Garmin.csproj 2>/dev/null)
+        FILE_VERSION=$(xmllint --xpath "string(//Project/PropertyGroup/FileVersion)" src/Fluent.Garmin/Fluent.Garmin.csproj 2>/dev/null)
+        
+        if [[ -z "$VERSION" ]]; then
+          echo "Error: Could not extract <Version> from src/Fluent.Garmin/Fluent.Garmin.csproj"
+          exit 1
+        fi
+        if [[ -z "$ASSEMBLY_VERSION" ]]; then
+          echo "Error: Could not extract <AssemblyVersion> from src/Fluent.Garmin/Fluent.Garmin.csproj"
+          exit 1
+        fi
+        if [[ -z "$FILE_VERSION" ]]; then
+          echo "Error: Could not extract <FileVersion> from src/Fluent.Garmin/Fluent.Garmin.csproj"
+          exit 1
+        fi
+        
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "assembly_version=$ASSEMBLY_VERSION" >> $GITHUB_OUTPUT
+        echo "file_version=$FILE_VERSION" >> $GITHUB_OUTPUT
+        
+        echo "PR Branch Versions:"
+        echo "Version: $VERSION"
+        echo "AssemblyVersion: $ASSEMBLY_VERSION"
+        echo "FileVersion: $FILE_VERSION"
+
+    - name: Get version from main branch
+      id: main-version
+      if: steps.check-changes.outputs.fluent_garmin_changed == 'true'
+      run: |
+        # Get the version from main branch
+        git checkout origin/main -- src/Fluent.Garmin/Fluent.Garmin.csproj
+        if [ $? -ne 0 ]; then
+          echo "Error: Failed to checkout src/Fluent.Garmin/Fluent.Garmin.csproj from origin/main. The file may not exist on the main branch or there may be git conflicts."
+          exit 1
+        fi
+        cp src/Fluent.Garmin/Fluent.Garmin.csproj main-Fluent.Garmin.csproj
+        git checkout HEAD -- src/Fluent.Garmin/Fluent.Garmin.csproj
+        
+        MAIN_VERSION=$(xmllint --xpath "string(//Project/PropertyGroup/Version)" main-Fluent.Garmin.csproj)
+        MAIN_ASSEMBLY_VERSION=$(xmllint --xpath "string(//Project/PropertyGroup/AssemblyVersion)" main-Fluent.Garmin.csproj)
+        MAIN_FILE_VERSION=$(xmllint --xpath "string(//Project/PropertyGroup/FileVersion)" main-Fluent.Garmin.csproj)
+        
+        if [[ -z "$MAIN_VERSION" || -z "$MAIN_ASSEMBLY_VERSION" || -z "$MAIN_FILE_VERSION" ]]; then
+          echo "::error::Failed to extract version information from main branch csproj file."
+          echo "::error::MAIN_VERSION: '$MAIN_VERSION'"
+          echo "::error::MAIN_ASSEMBLY_VERSION: '$MAIN_ASSEMBLY_VERSION'"
+          echo "::error::MAIN_FILE_VERSION: '$MAIN_FILE_VERSION'"
+          rm -f main-Fluent.Garmin.csproj
+          exit 1
+        fi
+
+        echo "main_version=$MAIN_VERSION" >> $GITHUB_OUTPUT
+        echo "main_assembly_version=$MAIN_ASSEMBLY_VERSION" >> $GITHUB_OUTPUT
+        echo "main_file_version=$MAIN_FILE_VERSION" >> $GITHUB_OUTPUT
+
+        echo "Main Branch Versions:"
+        echo "Version: $MAIN_VERSION"
+        echo "AssemblyVersion: $MAIN_ASSEMBLY_VERSION"
+        echo "FileVersion: $MAIN_FILE_VERSION"
+        # Clean up temporary file
+        rm -f main-Fluent.Garmin.csproj
+
+    - name: Compare versions
+      id: version-comparison
+      if: steps.check-changes.outputs.fluent_garmin_changed == 'true'
+      run: |
+        PR_VERSION="${{ steps.pr-version.outputs.version }}"
+        PR_ASSEMBLY_VERSION="${{ steps.pr-version.outputs.assembly_version }}"
+        PR_FILE_VERSION="${{ steps.pr-version.outputs.file_version }}"
+        
+        MAIN_VERSION="${{ steps.main-version.outputs.main_version }}"
+        MAIN_ASSEMBLY_VERSION="${{ steps.main-version.outputs.main_assembly_version }}"
+        MAIN_FILE_VERSION="${{ steps.main-version.outputs.main_file_version }}"
+        
+        echo "Comparing versions..."
+        
+        VERSION_CHANGED=false
+        ASSEMBLY_VERSION_CHANGED=false
+        FILE_VERSION_CHANGED=false
+        
+        if [[ "$PR_VERSION" != "$MAIN_VERSION" ]]; then
+          echo "✅ Version changed: $MAIN_VERSION → $PR_VERSION"
+          VERSION_CHANGED=true
+        else
+          echo "❌ Version unchanged: $PR_VERSION"
+        fi
+        
+        if [[ "$PR_ASSEMBLY_VERSION" != "$MAIN_ASSEMBLY_VERSION" ]]; then
+          echo "✅ AssemblyVersion changed: $MAIN_ASSEMBLY_VERSION → $PR_ASSEMBLY_VERSION"
+          ASSEMBLY_VERSION_CHANGED=true
+        else
+          echo "❌ AssemblyVersion unchanged: $PR_ASSEMBLY_VERSION"
+        fi
+        
+        if [[ "$PR_FILE_VERSION" != "$MAIN_FILE_VERSION" ]]; then
+          echo "✅ FileVersion changed: $MAIN_FILE_VERSION → $PR_FILE_VERSION"
+          FILE_VERSION_CHANGED=true
+        else
+          echo "❌ FileVersion unchanged: $PR_FILE_VERSION"
+        fi
+        
+        if [[ "$VERSION_CHANGED" == "true" && "$ASSEMBLY_VERSION_CHANGED" == "true" && "$FILE_VERSION_CHANGED" == "true" ]]; then
+          echo "✅ All version tags have been updated!"
+          echo "versions_updated=true" >> $GITHUB_OUTPUT
+        else
+          echo "❌ Not all version tags have been updated!"
+          echo "versions_updated=false" >> $GITHUB_OUTPUT
+          echo ""
+          echo "Please update the following version tags in src/Fluent.Garmin/Fluent.Garmin.csproj:"
+          [[ "$VERSION_CHANGED" == "false" ]] && echo "  - <Version>"
+          [[ "$ASSEMBLY_VERSION_CHANGED" == "false" ]] && echo "  - <AssemblyVersion>"
+          [[ "$FILE_VERSION_CHANGED" == "false" ]] && echo "  - <FileVersion>"
+        fi
+
+    - name: Validate version update
+      if: steps.check-changes.outputs.fluent_garmin_changed == 'true' && steps.version-comparison.outputs.versions_updated != 'true'
+      run: |
+        echo "::error::Version tags must be updated when making changes to src/Fluent.Garmin/"
+        echo "::error::Please update Version, AssemblyVersion, and FileVersion in src/Fluent.Garmin/Fluent.Garmin.csproj"
+        exit 1
+
+    - name: Success message
+      if: steps.check-changes.outputs.fluent_garmin_changed == 'true' && steps.version-comparison.outputs.versions_updated == 'true'
+      run: |
+        echo "::notice::✅ Version check passed! All version tags have been updated."
+
+    - name: Skip message
+      if: steps.check-changes.outputs.fluent_garmin_changed != 'true'
+      run: |
+        echo "::notice::ℹ️ No changes detected in src/Fluent.Garmin/ - version check skipped."
