@@ -85,7 +85,24 @@ jobs:
         echo "Version: $MAIN_VERSION"
         echo "AssemblyVersion: $MAIN_ASSEMBLY_VERSION"
         echo "FileVersion: $MAIN_FILE_VERSION"
-        
+
+        if [[ -z "$MAIN_VERSION" || -z "$MAIN_ASSEMBLY_VERSION" || -z "$MAIN_FILE_VERSION" ]]; then
+          echo "::error::Failed to extract version information from main branch csproj file."
+          echo "::error::MAIN_VERSION: '$MAIN_VERSION'"
+          echo "::error::MAIN_ASSEMBLY_VERSION: '$MAIN_ASSEMBLY_VERSION'"
+          echo "::error::MAIN_FILE_VERSION: '$MAIN_FILE_VERSION'"
+          rm -f main-Fluent.Garmin.csproj
+          exit 1
+        fi
+
+        echo "main_version=$MAIN_VERSION" >> $GITHUB_OUTPUT
+        echo "main_assembly_version=$MAIN_ASSEMBLY_VERSION" >> $GITHUB_OUTPUT
+        echo "main_file_version=$MAIN_FILE_VERSION" >> $GITHUB_OUTPUT
+
+        echo "Main Branch Versions:"
+        echo "Version: $MAIN_VERSION"
+        echo "AssemblyVersion: $MAIN_ASSEMBLY_VERSION"
+        echo "FileVersion: $MAIN_FILE_VERSION"
         # Clean up temporary file
         rm -f main-Fluent.Garmin.csproj
 
